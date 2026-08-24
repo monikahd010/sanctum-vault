@@ -142,9 +142,27 @@ sanctum-vault/
 
 ## Key features
 
+- User registration, sign-in, logout, password changes, and session-based access control.
+- Vault management for passwords, documents, notes, cards, and identity records, with editing, soft deletion, file uploads, and downloads.
+- Generated passwords and secure sharing links with expiration, view limits, revocation, and self-destruct behavior.
+- Beneficiary management for delayed access and heartbeat check-ins with inactivity notifications.
+- Security center with breach status, notifications, activity history, and configurable two-factor authentication using TOTP, SMS OTP, hardware-key registration, and backup codes.
+- Plan selection, payment records, and user payment history.
+- Restricted admin panel with dashboard metrics, user management, heartbeat monitoring, threat monitoring, analytics, payments, and audit logs.
+- Responsive Flask/Jinja interface with dedicated user and administrator shells.
 
 ## Security notes
 
+- User passwords are stored as Werkzeug password hashes rather than plaintext passwords.
+- Authenticated routes use login and administrator role guards, and vault records are queried against the current user where applicable.
+- Session cookies are configured with `HttpOnly` and `SameSite=Lax` attributes. Set a strong `SECRET_KEY` through the environment before deployment.
+- Uploaded files are limited to 16 MB, checked against an allowlist of extensions, and renamed with Werkzeug's `secure_filename` helper.
+- Share links support expiration, maximum-view limits, and manual revocation. Treat generated share URLs as sensitive credentials.
+- Two-factor options and hashed backup codes are available, but they should be enabled and tested as part of deployment configuration.
+- This repository is a demonstration and is not production-ready by default. The development fallback secret, seeded demo credentials, simulated payment/SMS/hardware-key integrations, and local SQLite configuration must be replaced before deployment.
+- Review the vault encryption boundary before handling real secrets. The current application model labels the stored field `encrypted_value`, but production use requires verified client-side encryption and careful key-management design.
+- Enable HTTPS, secure cookies, CSRF protection, rate limiting, secure upload storage, dependency updates, and external secret management in a production deployment.
 
 ## Conclusion
 Sanctum Vault provides a practical foundation for securely managing sensitive data, sharing it when needed, and monitoring access through administrative tools. Before production use, review the security configuration and replace all development credentials and demo integrations.
+# sanctum-vault
