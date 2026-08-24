@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Admin Portal — Sanctum Vault{% endblock %}
+{% block body %}
+<div style="width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);position:relative;overflow:hidden">
+  <div class="auth-bg-grid"></div>
+  <div style="position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(13,148,136,.1) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none"></div>
+  <div class="auth-card" style="position:relative;border-color:rgba(13,148,136,.3)">
+    <a href="{{ url_for('landing') }}" style="position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:1.1rem;text-decoration:none">✕</a>
+    <div class="auth-logo">
+      <div class="logo-icon" style="background:linear-gradient(135deg,var(--teal),var(--green))">🛡️</div>
+      <div class="logo-text">Admin <span style="color:var(--teal2)">Portal</span></div>
+    </div>
+    <div style="background:rgba(13,148,136,.1);border:1px solid rgba(13,148,136,.3);border-radius:8px;padding:10px 14px;font-size:.8rem;color:var(--teal2);margin-bottom:20px">
+      🛡️ Restricted access. All sessions are logged and audited.
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+      <div class="flash flash-{{ cat }}" style="margin-bottom:14px">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Admin email</label>
+        <input class="form-input" type="email" name="email" placeholder="admin@sanctumvault.com" style="border-color:rgba(13,148,136,.3)" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Admin password</label>
+        <input class="form-input" type="password" name="password" placeholder="Admin credentials" required/>
+      </div>
+      <button class="btn btn-primary" style="background:linear-gradient(135deg,var(--teal),var(--green));margin-top:4px;width:100%" type="submit">Access admin panel →</button>
+    </form>
+    <p style="text-align:center;font-size:.75rem;color:var(--text3);margin-top:16px">Default: admin@sanctumvault.com / Admin@1234</p>
+  </div>
+</div>
+{% endblock %}

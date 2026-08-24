@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Create Account — Sanctum Vault{% endblock %}
+{% block body %}
+<div style="width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);position:relative;overflow:hidden">
+  <div class="auth-bg-grid"></div>
+  <div class="auth-glow"></div>
+  <div class="auth-card" style="position:relative">
+    <a href="{{ url_for('landing') }}" style="position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:1.1rem;text-decoration:none">✕</a>
+    <div class="auth-logo">
+      <div class="logo-icon">🔐</div>
+      <div class="logo-text">Sanctum <span>Vault</span></div>
+    </div>
+    <div class="auth-title">Create your vault</div>
+    <div class="auth-sub">Your master password is never stored</div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+      <div class="flash flash-{{ cat }}" style="margin-bottom:14px">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Full name</label>
+        <input class="form-input" type="text" name="name" placeholder="Ravi Kumar" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email address</label>
+        <input class="form-input" type="email" name="email" placeholder="you@example.com" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Master password</label>
+        <input class="form-input" type="password" name="password" id="reg-pass" placeholder="Min. 8 characters" required/>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--text3);margin-bottom:4px"><span>Password strength</span><span id="strength-label">—</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="strength-bar" style="width:0%;background:var(--red)"></div></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm password</label>
+        <input class="form-input" type="password" name="confirm_password" placeholder="Repeat master password" required/>
+      </div>
+      <button class="btn btn-primary" type="submit">Create account →</button>
+    </form>
+    <p style="text-align:center;font-size:.8rem;color:var(--text3);margin-top:16px">Already have one? <a href="{{ url_for('login') }}" style="color:var(--accent2)">Sign in</a></p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const rp = document.getElementById('reg-pass');
+if (rp) {
+  rp.addEventListener('input', () => {
+    const v = rp.value, len = v.length;
+    const bar = document.getElementById('strength-bar');
+    const lbl = document.getElementById('strength-label');
+    if (len === 0) { bar.style.width = '0%'; lbl.textContent = '—'; return; }
+    let s = 0;
+    if (len >= 8) s += 25; if (len >= 12) s += 25;
+    if (/[A-Z]/.test(v) && /[a-z]/.test(v)) s += 20;
+    if (/\d/.test(v)) s += 15; if (/[^A-Za-z0-9]/.test(v)) s += 15;
+    bar.style.width = s + '%';
+    if (s < 35) { bar.style.background = 'var(--red)'; lbl.style.color = 'var(--red)'; lbl.textContent = 'Weak'; }
+    else if (s < 70) { bar.style.background = 'var(--amber)'; lbl.style.color = 'var(--amber)'; lbl.textContent = 'Fair'; }
+    else { bar.style.background = 'var(--green)'; lbl.style.color = 'var(--green)'; lbl.textContent = 'Strong'; }
+  });
+}
+</script>
+{% endblock %}

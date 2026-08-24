@@ -1,0 +1,155 @@
+{% extends "app_shell.html" %}
+{% set active_page = 'sharing' %}
+{% block title %}Secure Sharing — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>🔗 Secure Sharing</h1>
+  <p>Share encrypted items with time-limited, self-destructing links</p>
+</div>
+
+<button class="btn btn-primary btn-sm" style="margin-bottom:20px" onclick="document.getElementById('share-modal').classList.add('open')">+ Create share link</button>
+
+<!-- Flash with copyable link -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    {% if cat == 'link' %}
+    <div class="flash" style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:var(--green);display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <span style="flex:1;font-family:var(--mono);font-size:.8rem;word-break:break-all">{{ msg.replace('Share link created: ','') }}</span>
+      <button class="btn btn-ghost btn-sm" onclick="copyLink('{{ msg.replace('Share link created: ','') }}', this)">📋 Copy</button>
+      <span onclick="this.parentNode.remove()" style="cursor:pointer;color:var(--text3)">✕</span>
+    </div>
+    {% else %}
+    <div class="flash flash-{{ cat }}" style="margin-bottom:14px">{{ msg }} <span onclick="this.parentNode.remove()" style="float:right;cursor:pointer">✕</span></div>
+    {% endif %}
+  {% endfor %}
+{% endwith %}
+
+<div class="card">
+  <div class="card-header"><div class="card-title">Active share links</div></div>
+  {% if links %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Item</th><th>Link</th><th>Expires</th><th>Views</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for link in links %}
+        <tr>
+          <td style="font-size:.85rem">{{ link.item.name if link.item else '— (no item)' }}</td>
+          <td>
+            {% set share_url = request.host_url.rstrip('/') + '/s/' + link.token %}
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-family:var(--mono);font-size:.72rem;color:var(--accent2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ share_url }}">{{ share_url }}</span>
+              <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:.7rem" onclick="copyLink('{{ share_url }}', this)">📋</button>
+            </div>
+          </td>
+          <td style="font-size:.8rem">{{ link.expires_label }}</td>
+          <td style="font-size:.8rem">{{ link.view_count }}{% if link.max_views %}/{{ link.max_views }}{% endif %}</td>
+          <td>
+            <span class="badge badge-{% if link.status=='active' %}green{% elif link.status=='expired' %}gray{% elif link.status=='used' %}amber{% else %}red{% endif %}">{{ link.status|title }}</span>
+          </td>
+          <td>
+            {% if link.status == 'active' %}
+            <form method="POST" action="{{ url_for('revoke_link', link_id=link.id) }}" style="display:inline">
+              <button class="btn btn-danger btn-sm" type="submit">Revoke</button>
+            </form>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="color:var(--text3);font-size:.85rem;padding:20px 0;text-align:center">No share links created yet. Click "+ Create share link" above.</div>
+  {% endif %}
+</div>
+
+<!-- Share Modal -->
+<div class="modal-overlay" id="share-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🔗 Create Share Link</div>
+      <button class="modal-close" onclick="document.getElementById('share-modal').classList.remove('open')">✕</button>
+    </div>
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Vault item (optional)</label>
+        <select class="form-input" name="item_id">
+          <option value="">— No specific item —</option>
+          {% for item in vault_items %}
+          <option value="{{ item.id }}">{{ item.icon }} {{ item.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Expiry type toggle -->
+      <div class="form-group">
+        <label class="form-label">Expiry type</label>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button type="button" class="btn btn-ghost btn-sm expiry-tab active-tab" data-tab="hours" onclick="switchExpiryTab('hours')">Duration</button>
+          <button type="button" class="btn btn-ghost btn-sm expiry-tab" data-tab="date" onclick="switchExpiryTab('date')">Specific date</button>
+          <button type="button" class="btn btn-ghost btn-sm expiry-tab" data-tab="never" onclick="switchExpiryTab('never')">Never</button>
+        </div>
+        <input type="hidden" name="expire_type" id="expire_type" value="hours"/>
+
+        <div id="tab-hours">
+          <select class="form-input" name="expire_hours">
+            <option value="1">1 hour</option>
+            <option value="6">6 hours</option>
+            <option value="24" selected>24 hours</option>
+            <option value="72">3 days</option>
+            <option value="168">7 days</option>
+            <option value="720">30 days</option>
+          </select>
+        </div>
+        <div id="tab-date" style="display:none">
+          <input class="form-input" type="date" name="expire_date" min="{{ '' }}"/>
+        </div>
+        <div id="tab-never" style="display:none">
+          <div style="padding:10px 12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:8px;font-size:.8rem;color:var(--amber)">
+            ⚠️ This link will never expire. Anyone with the URL can access it.
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Max views (leave blank for unlimited)</label>
+        <input class="form-input" type="number" name="max_access" min="1" placeholder="e.g. 1, 5, 10 …"/>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button type="submit" class="btn btn-primary" style="flex:1">Generate link 🔗</button>
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('share-modal').classList.remove('open')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyLink(url, btn) {
+  navigator.clipboard.writeText(url).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  });
+}
+
+function switchExpiryTab(tab) {
+  document.getElementById('expire_type').value = tab;
+  document.querySelectorAll('.expiry-tab').forEach(b => b.classList.remove('active-tab'));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active-tab');
+  ['hours','date','never'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === tab ? 'block' : 'none';
+  });
+}
+
+// Set min date for date picker to today
+const datePicker = document.querySelector('input[name="expire_date"]');
+if (datePicker) {
+  const today = new Date().toISOString().split('T')[0];
+  datePicker.min = today;
+  datePicker.value = today;
+}
+</script>
+{% endblock %}

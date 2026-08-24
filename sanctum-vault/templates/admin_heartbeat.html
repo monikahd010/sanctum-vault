@@ -1,0 +1,39 @@
+{% extends "admin_shell.html" %}
+{% set active_page = 'heartbeat' %}
+{% block title %}Heartbeat Monitor — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>💓 Heartbeat Monitor</h1>
+  <p>Track user activity and inactivity across all accounts</p>
+</div>
+<div class="card" style="padding:0;overflow:hidden">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>User</th><th>Email</th><th>Last login</th><th>Days inactive</th><th>Status</th><th>Interval</th></tr></thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="avatar" style="width:28px;height:28px;font-size:.7rem">{{ user.initials }}</div>
+              <span style="font-size:.88rem">{{ user.name }}</span>
+            </div>
+          </td>
+          <td style="font-size:.82rem;color:var(--text2)">{{ user.email }}</td>
+          <td style="font-size:.78rem;color:var(--text3)">{{ user.last_login.strftime('%b %d, %Y') if user.last_login else 'Never' }}</td>
+          <td style="font-family:var(--mono);font-size:.82rem">{{ user.days_since_login if user.days_since_login is not none else '—' }}</td>
+          <td>
+            <span class="badge badge-{{ 'green' if user.heartbeat_status=='active' else 'amber' if user.heartbeat_status=='idle' else 'red' }}">
+              {{ user.heartbeat_status|title }}
+            </span>
+          </td>
+          <td style="font-size:.78rem;color:var(--text3)">{{ user.heartbeat_interval }} days</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:30px">No users found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

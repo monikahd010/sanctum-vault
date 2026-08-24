@@ -1,0 +1,103 @@
+{% extends "app_shell.html" %}
+{% set active_page = 'beneficiaries' %}
+{% block title %}Edit Beneficiary — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>✏️ Edit Beneficiary</h1>
+  <p>Update details for <strong>{{ b.name }}</strong></p>
+</div>
+<div style="max-width:520px">
+  <div class="card">
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Full name</label>
+        <input class="form-input" type="text" name="name" value="{{ b.name }}" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email address</label>
+        <input class="form-input" type="email" name="email" value="{{ b.email }}" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Relationship</label>
+        <input class="form-input" type="text" name="relationship" value="{{ b.relationship }}" placeholder="e.g. Spouse, Sibling"/>
+      </div>
+
+      <!-- Wait period type toggle -->
+      <div class="form-group">
+        <label class="form-label">Wait period type</label>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button type="button" class="btn btn-ghost btn-sm wp-tab {% if not b.wait_until %}active-tab{% endif %}" data-tab="duration" onclick="switchWPTab('duration')">⏱ Duration</button>
+          <button type="button" class="btn btn-ghost btn-sm wp-tab {% if b.wait_until %}active-tab{% endif %}"  data-tab="date"     onclick="switchWPTab('date')">📅 Specific date</button>
+        </div>
+        <input type="hidden" name="wait_type" id="wait_type" value="{{ 'date' if b.wait_until else 'duration' }}"/>
+
+        <div id="wp-duration" {% if b.wait_until %}style="display:none"{% endif %}>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div><label class="form-label">Years</label><input class="form-input" type="number" name="wait_years"  min="0" value="{{ b.wait_years }}"/></div>
+              <div><label class="form-label">Months</label><input class="form-input" type="number" name="wait_months" min="0" value="{{ b.wait_months }}"/></div>
+              <div><label class="form-label">Days</label><input class="form-input" type="number" name="wait_days"   min="0" value="{{ b.wait_days }}"/></div>
+              <div><label class="form-label">Hours</label><input class="form-input" type="number" name="wait_hours"  min="0" value="{{ b.wait_hours }}"/></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="wp-date" {% if not b.wait_until %}style="display:none"{% endif %}>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px">
+              <div>
+                <label class="form-label">Day</label>
+                <input class="form-input" type="number" id="wp-day" min="1" max="31" value="{{ b.wait_until.day if b.wait_until else 1 }}"/>
+              </div>
+              <div>
+                <label class="form-label">Month</label>
+                <select class="form-input" id="wp-month">
+                  {% for m in [('01','January'),('02','February'),('03','March'),('04','April'),('05','May'),('06','June'),('07','July'),('08','August'),('09','September'),('10','October'),('11','November'),('12','December')] %}
+                  <option value="{{ m[0] }}" {% if b.wait_until and b.wait_until.strftime('%m')==m[0] %}selected{% endif %}>{{ m[1] }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Year</label>
+                <input class="form-input" type="number" id="wp-year" min="2024" value="{{ b.wait_until.year if b.wait_until else 2026 }}"/>
+              </div>
+            </div>
+            <input type="hidden" name="wait_until_date" id="wait-until-hidden" value="{{ b.wait_until.strftime('%Y-%m-%d') if b.wait_until else '' }}"/>
+            <div style="font-size:.78rem;color:var(--text2)">Selected: <strong id="wp-date-preview">{{ b.wait_until.strftime('%B %d, %Y') if b.wait_until else '—' }}</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button type="submit" class="btn btn-primary" style="flex:1">Save changes 💾</button>
+        <a href="{{ url_for('beneficiaries') }}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function switchWPTab(tab) {
+  document.getElementById('wait_type').value = tab;
+  document.querySelectorAll('.wp-tab').forEach(b => b.classList.remove('active-tab'));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active-tab');
+  document.getElementById('wp-duration').style.display = tab === 'duration' ? 'block' : 'none';
+  document.getElementById('wp-date').style.display     = tab === 'date'     ? 'block' : 'none';
+}
+function updateDatePreview() {
+  const d = String(document.getElementById('wp-day').value).padStart(2,'0');
+  const m = document.getElementById('wp-month').value;
+  const y = document.getElementById('wp-year').value;
+  if (d && m && y && y.length === 4) {
+    document.getElementById('wait-until-hidden').value = `${y}-${m}-${d}`;
+    const dateObj = new Date(`${y}-${m}-${d}`);
+    document.getElementById('wp-date-preview').textContent = dateObj.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+  }
+}
+['wp-day','wp-month','wp-year'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) { el.addEventListener('input', updateDatePreview); el.addEventListener('change', updateDatePreview); }
+});
+</script>
+{% endblock %}

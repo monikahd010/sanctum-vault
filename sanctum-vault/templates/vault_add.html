@@ -1,0 +1,83 @@
+{% extends "app_shell.html" %}
+{% set active_page = 'vault' %}
+{% block title %}Add Item — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>+ Add Vault Item</h1>
+  <p>Add an encrypted item to your vault</p>
+</div>
+<div style="max-width:560px">
+  <div class="card">
+    <form method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label class="form-label">Item name</label>
+        <input class="form-input" type="text" name="name" placeholder="e.g. Gmail Account" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-input" name="item_type" id="item-type" onchange="updateFields()">
+          <option value="password">🔑 Password</option>
+          <option value="document">📄 Document</option>
+          <option value="note">🗒️ Secure Note</option>
+          <option value="card">💳 Card</option>
+          <option value="identity">🪪 Identity</option>
+        </select>
+      </div>
+      <div class="form-group" id="field-username">
+        <label class="form-label">Username / Email</label>
+        <input class="form-input" type="text" name="username" placeholder="you@example.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label" id="value-label">Password / Secret</label>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" type="password" name="value" id="secret-field" placeholder="Enter or generate" style="flex:1"/>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="generateAndFill()">Generate</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="toggleShow()">Show</button>
+        </div>
+      </div>
+      <div class="form-group" id="field-url">
+        <label class="form-label">Website URL</label>
+        <input class="form-input" type="url" name="url" placeholder="https://example.com"/>
+      </div>
+      <!-- File attachment — shown only for document type -->
+      <div class="form-group" id="field-attachment" style="display:none">
+        <label class="form-label">Attach file</label>
+        <input class="form-input" type="file" name="attachment" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif,.xlsx,.csv,.zip" style="padding:8px"/>
+        <div style="font-size:.72rem;color:var(--text3);margin-top:4px">Supported: PDF, DOC, DOCX, TXT, images, XLSX, CSV, ZIP — max 16 MB</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-input" name="notes" rows="3" placeholder="Optional notes…" style="resize:vertical"></textarea>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button type="submit" class="btn btn-primary" style="flex:1">Save to vault 🔒</button>
+        <a href="{{ url_for('vault') }}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function generateAndFill() {
+  const resp = await fetch('/api/generate-password?length=16');
+  const data = await resp.json();
+  const field = document.getElementById('secret-field');
+  field.type  = 'text';
+  field.value = data.password;
+}
+function toggleShow() {
+  const f = document.getElementById('secret-field');
+  f.type = f.type === 'password' ? 'text' : 'password';
+}
+function updateFields() {
+  const t = document.getElementById('item-type').value;
+  document.getElementById('field-username').style.display   = ['password','identity'].includes(t) ? 'block' : 'none';
+  document.getElementById('field-url').style.display        = t === 'password' ? 'block' : 'none';
+  document.getElementById('field-attachment').style.display = t === 'document'  ? 'block' : 'none';
+  document.getElementById('value-label').textContent =
+    t === 'note' ? 'Note content' : t === 'card' ? 'Card number' : 'Password / Secret';
+}
+updateFields();
+</script>
+{% endblock %}

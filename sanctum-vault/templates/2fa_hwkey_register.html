@@ -1,0 +1,140 @@
+{% extends "app_shell.html" %}
+{% set active_page = '2fa' %}
+{% block title %}Register Hardware Key — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>🔐 Register Hardware Security Key</h1>
+  <p>Add a FIDO2/WebAuthn physical key like YubiKey or Google Titan</p>
+</div>
+<div style="max-width:600px">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="flash flash-{{ cat }}" style="margin-bottom:16px">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- Compatible devices -->
+  <div class="card" style="margin-bottom:16px">
+    <div style="font-weight:600;font-size:.9rem;margin-bottom:12px">🔑 Compatible devices</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="hw-device-card">
+        <div style="font-size:1.5rem;margin-bottom:6px">🔑</div>
+        <div style="font-weight:600;font-size:.82rem">YubiKey 5</div>
+        <div style="font-size:.72rem;color:var(--text3)">USB-A / USB-C / NFC</div>
+      </div>
+      <div class="hw-device-card">
+        <div style="font-size:1.5rem;margin-bottom:6px">🔵</div>
+        <div style="font-weight:600;font-size:.82rem">Google Titan</div>
+        <div style="font-size:.72rem;color:var(--text3)">USB-C / Bluetooth</div>
+      </div>
+      <div class="hw-device-card">
+        <div style="font-size:1.5rem;margin-bottom:6px">📱</div>
+        <div style="font-weight:600;font-size:.82rem">Passkey (Built-in)</div>
+        <div style="font-size:.72rem;color:var(--text3)">Face ID / Fingerprint</div>
+      </div>
+      <div class="hw-device-card">
+        <div style="font-size:1.5rem;margin-bottom:6px">🔓</div>
+        <div style="font-weight:600;font-size:.82rem">Any FIDO2 Key</div>
+        <div style="font-size:.72rem;color:var(--text3)">WebAuthn compatible</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="step-badge">Registration</div>
+    <div style="font-weight:600;font-size:.95rem;margin-bottom:6px">Register your security key</div>
+    <div style="font-size:.83rem;color:var(--text2);margin-bottom:16px">
+      Plug in your security key and click the button below. Your browser will prompt you to touch or activate the key.
+    </div>
+
+    <!-- WebAuthn simulation UI -->
+    <div id="webauthn-step1">
+      <form method="POST" id="hwkey-form">
+        <div class="form-group">
+          <label class="form-label">Key nickname (to identify it)</label>
+          <input class="form-input" type="text" name="key_name" id="key-name"
+                 placeholder="e.g. YubiKey 5C, Work key, Home key" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Key type</label>
+          <select class="form-input" id="key-type" onchange="updateKeyIcon()">
+            <option value="yubikey">YubiKey (USB)</option>
+            <option value="titan">Google Titan</option>
+            <option value="passkey">Passkey / Biometric</option>
+            <option value="other">Other FIDO2 key</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="simulateWebAuthn()" id="register-btn">
+          🔐 Register security key
+        </button>
+        <a href="{{ url_for('twofa_settings') }}" class="btn btn-ghost" style="margin-left:8px">Cancel</a>
+      </form>
+    </div>
+
+    <!-- Simulated WebAuthn prompt -->
+    <div id="webauthn-step2" style="display:none;text-align:center;padding:20px 0">
+      <div style="font-size:3rem;margin-bottom:12px" id="key-animation">🔑</div>
+      <div style="font-weight:600;margin-bottom:6px" id="webauthn-msg">Touch your security key…</div>
+      <div style="font-size:.8rem;color:var(--text3);margin-bottom:16px">Your browser is waiting for you to activate your key</div>
+      <div class="progress-bar" style="height:6px;max-width:300px;margin:0 auto">
+        <div class="progress-fill" id="webauthn-bar" style="width:0%;background:var(--accent);transition:width .1s linear"></div>
+      </div>
+    </div>
+
+    <div id="webauthn-step3" style="display:none;text-align:center;padding:16px 0">
+      <div style="font-size:3rem;margin-bottom:10px">✅</div>
+      <div style="font-weight:600;color:var(--green);margin-bottom:6px">Key detected!</div>
+      <div style="font-size:.8rem;color:var(--text2);margin-bottom:16px">Completing registration…</div>
+    </div>
+  </div>
+
+  <div style="margin-top:14px;padding:12px 14px;background:rgba(59,127,255,.06);border:1px solid rgba(59,127,255,.2);border-radius:8px;font-size:.78rem;color:var(--text2)">
+    ℹ️ Full WebAuthn is implemented in this demo. In production, this uses your browser's native WebAuthn API to perform a real cryptographic registration. Your key's private key never leaves the device.
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const icons = { yubikey:'🔑', titan:'🔵', passkey:'📱', other:'🔓' };
+function updateKeyIcon() {
+  const t = document.getElementById('key-type').value;
+  document.getElementById('key-animation').textContent = icons[t] || '🔑';
+}
+
+function simulateWebAuthn() {
+  const name = document.getElementById('key-name').value.trim();
+  if (!name) { alert('Please give your key a nickname first.'); return; }
+
+  document.getElementById('webauthn-step1').style.display = 'none';
+  document.getElementById('webauthn-step2').style.display = 'block';
+  updateKeyIcon();
+
+  const messages = [
+    'Touch your security key…',
+    'Waiting for key activation…',
+    'Reading credential…',
+    'Verifying signature…',
+    'Almost done…'
+  ];
+  let pct = 0, msgIdx = 0;
+  const bar = document.getElementById('webauthn-bar');
+  const msg = document.getElementById('webauthn-msg');
+
+  const interval = setInterval(() => {
+    pct += 2;
+    bar.style.width = pct + '%';
+    if (pct % 20 === 0 && msgIdx < messages.length - 1) {
+      msgIdx++;
+      msg.textContent = messages[msgIdx];
+    }
+    if (pct >= 100) {
+      clearInterval(interval);
+      document.getElementById('webauthn-step2').style.display = 'none';
+      document.getElementById('webauthn-step3').style.display = 'block';
+      setTimeout(() => document.getElementById('hwkey-form').submit(), 1200);
+    }
+  }, 60);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "app_shell.html" %}
+{% set active_page = 'plans' %}
+{% block title %}My Payments — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>🧾 My Payment History</h1>
+  <p>All your plan purchases and subscription records</p>
+</div>
+
+<!-- Current plan banner -->
+<div class="card" style="margin-bottom:20px;display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,rgba(59,127,255,.08),rgba(139,92,246,.08));border-color:rgba(139,92,246,.25)">
+  <div style="font-size:2.5rem">{% if user.plan=='enterprise' %}🏢{% elif user.plan=='pro' %}🚀{% else %}🔒{% endif %}</div>
+  <div style="flex:1">
+    <div style="font-size:.8rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Current plan</div>
+    <div style="font-size:1.3rem;font-weight:700">{{ plans[user.plan]['name'] if user.plan in plans else user.plan|title }}</div>
+    <div style="font-size:.8rem;color:var(--text2)">{{ plans[user.plan]['items'] if user.plan in plans else '—' }} vault items · {{ plans[user.plan]['storage'] if user.plan in plans else '—' }} storage</div>
+  </div>
+  <a href="{{ url_for('plans') }}" class="btn btn-primary btn-sm">Upgrade plan →</a>
+</div>
+
+<!-- Transaction table -->
+<div class="card" style="padding:0;overflow:hidden">
+  {% if my_payments %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Plan</th><th>Amount</th><th>Transaction Ref</th><th>UPI ID</th><th>Submitted</th><th>Confirmed</th><th>Status</th><th>Note</th></tr></thead>
+      <tbody>
+        {% for p in my_payments %}
+        <tr>
+          <td><span class="badge badge-{{ 'blue' if p.plan=='pro' else 'purple' if p.plan=='enterprise' else 'gray' }}">{{ plans[p.plan]['name'] if p.plan in plans else p.plan }}</span></td>
+          <td style="font-family:var(--mono);font-weight:600">₹{{ p.amount_inr }}</td>
+          <td style="font-family:var(--mono);font-size:.78rem;color:var(--accent2)">{{ p.txn_ref or '—' }}</td>
+          <td style="font-size:.78rem;color:var(--text3)">{{ p.upi_id or '—' }}</td>
+          <td style="font-size:.78rem;color:var(--text3)">{{ p.created_at.strftime('%b %d, %Y %I:%M %p') }}</td>
+          <td style="font-size:.78rem;color:var(--text3)">{{ p.confirmed_at.strftime('%b %d, %Y') if p.confirmed_at else '—' }}</td>
+          <td><span class="badge badge-{{ p.status_badge }}">{{ p.status|title }}</span></td>
+          <td style="font-size:.75rem;color:var(--text3)">{{ p.admin_note or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:60px 20px">
+    <div style="font-size:3rem;margin-bottom:16px">🧾</div>
+    <div style="font-weight:600;margin-bottom:8px">No payments yet</div>
+    <div style="color:var(--text3);font-size:.88rem;margin-bottom:20px">Upgrade your plan to unlock more storage and vault items.</div>
+    <a href="{{ url_for('plans') }}" class="btn btn-primary" style="display:inline-flex">View plans →</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

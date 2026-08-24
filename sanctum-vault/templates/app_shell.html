@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🔐</div>
+      <div class="logo-name">Sanctum <span>Vault</span></div>
+    </div>
+    <div style="padding:6px 10px;margin:4px 8px">
+      <span class="enc-badge" style="font-size:.63rem;width:100%;justify-content:center">🔒 AES-256 Active</span>
+    </div>
+
+    <div class="sidebar-section">Main</div>
+    <a class="nav-item {% if active_page=='dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}"><span class="nav-icon">🏠</span><span>Dashboard</span></a>
+    <a class="nav-item {% if active_page=='vault' %}active{% endif %}"     href="{{ url_for('vault') }}"><span class="nav-icon">🗄️</span><span>My Vault</span></a>
+    <a class="nav-item {% if active_page=='beneficiaries' %}active{% endif %}" href="{{ url_for('beneficiaries') }}"><span class="nav-icon">👥</span><span>Beneficiaries</span></a>
+    <a class="nav-item {% if active_page=='sharing' %}active{% endif %}"   href="{{ url_for('sharing') }}"><span class="nav-icon">🔗</span><span>Secure Sharing</span></a>
+    <a class="nav-item {% if active_page=='plans' %}active{% endif %}"     href="{{ url_for('plans') }}"><span class="nav-icon">💎</span><span>Plans &amp; Billing</span></a>
+
+    <div class="sidebar-section">Security</div>
+    <a class="nav-item {% if active_page=='heartbeat' %}active{% endif %}" href="{{ url_for('heartbeat') }}"><span class="nav-icon">💓</span><span>Heartbeat</span><span class="nav-badge green">ON</span></a>
+    <a class="nav-item {% if active_page=='activity' %}active{% endif %}"  href="{{ url_for('activity') }}"><span class="nav-icon">📋</span><span>Login Activity</span></a>
+    <a class="nav-item {% if active_page=='2fa' %}active{% endif %}"       href="{{ url_for('twofa_settings') }}"><span class="nav-icon">🔑</span><span>2FA Settings</span></a>
+    <a class="nav-item {% if active_page=='breach' %}active{% endif %}"    href="{{ url_for('breach') }}"><span class="nav-icon">⚠️</span><span>Breach Alerts</span><span class="nav-badge breach-badge" style="display:none">0</span></a>
+
+    <div class="sidebar-section">Tools</div>
+    <a class="nav-item {% if active_page=='ai' %}active{% endif %}"            href="{{ url_for('ai_guide') }}"><span class="nav-icon">🤖</span><span>AI Vault Guide</span></a>
+    <a class="nav-item {% if active_page=='notifications' %}active{% endif %}" href="{{ url_for('notifications') }}"><span class="nav-icon">🔔</span><span>Notifications</span><span class="nav-badge notif-badge" style="display:none">0</span></a>
+    <a class="nav-item {% if active_page=='settings' %}active{% endif %}"      href="{{ url_for('settings') }}"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+    <a class="nav-item nav-logout" href="{{ url_for('logout') }}"><span class="nav-icon">⏻</span><span>Logout</span></a>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="avatar">{{ session.user_name[:2]|upper }}</div>
+        <div class="user-info">
+          <div class="user-name">{{ session.user_name }}</div>
+          <div class="user-role">My Account</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="btn-icon" onclick="toggleSidebar()" style="margin-right:8px">☰</button>
+      <div class="topbar-search"><span class="s-icon">🔍</span><input type="text" placeholder="Search vault…"/></div>
+      <div class="topbar-title"></div>
+      <div class="heartbeat-pill"><span class="pulse-dot"></span> Active</div>
+      <button class="btn-icon theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme" id="theme-btn">🌙</button>
+      <a href="{{ url_for('notifications') }}" class="notif-btn">🔔<div class="notif-dot notif-indicator" style="display:none"></div></a>
+      <div class="avatar" style="cursor:pointer" onclick="window.location='{{ url_for('settings') }}'">{{ session.user_name[:2]|upper }}</div>
+    </div>
+    <div class="content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+        <div class="flash flash-{{ cat }}">{{ msg }} <span onclick="this.parentNode.remove()" style="float:right;cursor:pointer">✕</span></div>
+        {% endfor %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+{% endblock %}

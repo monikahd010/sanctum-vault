@@ -1,0 +1,38 @@
+{% extends "admin_shell.html" %}
+{% set active_page = 'threats' %}
+{% block title %}Threat Monitor — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>⚠️ Threat Monitor</h1>
+  <p>Security alerts and suspicious activity across all accounts</p>
+</div>
+{% if threats %}
+<div style="display:flex;flex-direction:column;gap:10px">
+  {% for t in threats %}
+  <div class="card" style="border-color:rgba(239,68,68,.2)">
+    <div style="display:flex;align-items:flex-start;gap:12px">
+      <div class="act-icon alert" style="flex-shrink:0">⚠️</div>
+      <div style="flex:1">
+        <div style="font-weight:600;margin-bottom:4px">{{ t.action }}</div>
+        <div style="font-size:.8rem;color:var(--text2);margin-bottom:6px">{{ t.detail or 'No details' }}</div>
+        <div style="display:flex;gap:8px;font-size:.75rem;color:var(--text3)">
+          <span>User #{{ t.user_id }}</span>
+          <span>·</span>
+          <span>{{ t.ip or 'Unknown IP' }}</span>
+          <span>·</span>
+          <span>{{ t.time_ago }}</span>
+        </div>
+      </div>
+      <span class="badge badge-red">Threat</span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:60px 20px">
+  <div style="font-size:3rem;margin-bottom:16px">✅</div>
+  <div style="font-size:1rem;font-weight:600;color:var(--green);margin-bottom:8px">No threats detected</div>
+  <div style="color:var(--text3);font-size:.88rem">The system is secure. No suspicious activity logged.</div>
+</div>
+{% endif %}
+{% endblock %}

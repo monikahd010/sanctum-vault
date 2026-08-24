@@ -1,0 +1,56 @@
+{% extends "app_shell.html" %}
+{% set active_page = 'vault' %}
+{% block title %}My Vault — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>🗄️ My Vault</h1>
+  <p>All your encrypted data — passwords, documents, notes, cards</p>
+</div>
+<div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+  <a href="{{ url_for('vault_add') }}" class="btn btn-primary btn-sm">+ Add item</a>
+  <div style="margin-left:auto"><span class="enc-badge">🔒 All items encrypted</span></div>
+</div>
+<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+  <a href="{{ url_for('vault') }}"                     class="btn btn-ghost btn-sm {% if category=='all'      %}active-filter{% endif %}">All ({{ counts.all }})</a>
+  <a href="{{ url_for('vault', category='password') }}" class="btn btn-ghost btn-sm {% if category=='password' %}active-filter{% endif %}">🔑 Passwords ({{ counts.password }})</a>
+  <a href="{{ url_for('vault', category='document') }}" class="btn btn-ghost btn-sm {% if category=='document' %}active-filter{% endif %}">📄 Documents ({{ counts.document }})</a>
+  <a href="{{ url_for('vault', category='note') }}"     class="btn btn-ghost btn-sm {% if category=='note'     %}active-filter{% endif %}">🗒️ Notes ({{ counts.note }})</a>
+  <a href="{{ url_for('vault', category='card') }}"     class="btn btn-ghost btn-sm {% if category=='card'     %}active-filter{% endif %}">💳 Cards ({{ counts.card }})</a>
+</div>
+
+{% if items %}
+<div class="vault-grid">
+  {% for item in items %}
+  <div class="vault-item">
+    <div class="vault-item-icon">{{ item.icon }}</div>
+    <div class="vault-item-name">{{ item.name }}</div>
+    <div class="vault-item-meta">{{ item.age_label }}</div>
+    {% if item.file_name %}
+    <div style="font-size:.7rem;color:var(--teal2);margin-top:4px">📎 {{ item.file_name }} ({{ item.file_size_label }})</div>
+    {% endif %}
+    <div class="vault-item-type">
+      <span class="badge badge-{% if item.is_breached %}red{% elif item.item_type=='password' %}blue{% elif item.item_type=='card' %}purple{% elif item.item_type=='note' %}amber{% else %}gray{% endif %}" style="font-size:.65rem">
+        {% if item.is_breached %}⚠️ Breached{% else %}{{ item.item_type|title }}{% endif %}
+      </span>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">
+      <a href="{{ url_for('vault_edit', item_id=item.id) }}" class="btn btn-ghost btn-sm" style="flex:1;justify-content:center">✏️ Edit</a>
+      {% if item.file_path %}
+      <a href="{{ url_for('vault_download', item_id=item.id) }}" class="btn btn-ghost btn-sm">⬇</a>
+      {% endif %}
+      <form method="POST" action="{{ url_for('vault_delete', item_id=item.id) }}" onsubmit="return confirm('Delete this item?')">
+        <button class="btn btn-danger btn-sm" type="submit">🗑</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:60px 20px">
+  <div style="font-size:3rem;margin-bottom:16px">🗄️</div>
+  <div style="font-size:1rem;font-weight:600;margin-bottom:8px">Your vault is empty</div>
+  <div style="color:var(--text3);font-size:.88rem;margin-bottom:20px">Start adding passwords, documents, notes, and more.</div>
+  <a href="{{ url_for('vault_add') }}" class="btn btn-primary" style="display:inline-flex">+ Add your first item</a>
+</div>
+{% endif %}
+{% endblock %}

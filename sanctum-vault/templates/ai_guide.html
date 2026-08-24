@@ -1,0 +1,58 @@
+{% extends "app_shell.html" %}
+{% set active_page = 'ai' %}
+{% block title %}AI Vault Guide — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>🤖 AI Vault Guide</h1>
+  <p>Your intelligent security assistant — ask anything about your vault</p>
+</div>
+<div class="card" style="padding:0;overflow:hidden">
+  <div class="ai-chat">
+    <div class="ai-messages" id="ai-msgs">
+      <div class="ai-msg">
+        <div class="ai-avatar">🤖</div>
+        <div class="ai-bubble">👋 Hi {{ session.user_name }}! I'm your AI Vault Guide. I can help you:<br><br>• Analyze your password security<br>• Guide you through breach alerts<br>• Set up beneficiaries &amp; emergency access<br>• Explain encryption and privacy settings<br><br>What would you like help with today?</div>
+      </div>
+    </div>
+    <div class="ai-suggestions">
+      <div class="ai-chip" onclick="aiSend('Check my password health')">🔑 Password health</div>
+      <div class="ai-chip" onclick="aiSend('How does zero-knowledge encryption work?')">🔐 About encryption</div>
+      <div class="ai-chip" onclick="aiSend('Set up emergency access')">🆘 Emergency access</div>
+      <div class="ai-chip" onclick="aiSend('Which breach alerts should I fix first?')">⚠️ Fix breaches</div>
+      <div class="ai-chip" onclick="aiSend('Generate a strong password')">🎲 Generate password</div>
+    </div>
+    <div class="ai-input-row">
+      <input class="ai-input" id="ai-input" placeholder="Ask anything about your vault security…" onkeydown="if(event.key==='Enter')aiSend()"/>
+      <button class="ai-send" onclick="aiSend()">➤</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const aiResponses = {
+  'Check my password health': `🔑 <strong>Password health analysis:</strong><br><br>Based on your vault, here's a breakdown:<br>• Analyse each password for strength<br>• Check for reused passwords<br>• Look for passwords older than 6 months<br><br><strong>Recommended actions:</strong><br>1. Update any weak passwords immediately<br>2. Enable 2FA on all important accounts<br>3. Review passwords older than 6 months`,
+  'How does zero-knowledge encryption work?': `🔐 <strong>Zero-knowledge encryption explained:</strong><br><br>In Sanctum Vault, your master password <strong>never leaves your device</strong>. Here's how:<br><br>1. Your password is passed through PBKDF2 to derive an encryption key<br>2. All data is encrypted locally with AES-256-GCM<br>3. Only encrypted ciphertext is sent to our servers<br>4. Even we cannot read your data<br><br>This means: if our servers are breached, your data is still safe.`,
+  'Set up emergency access': `🆘 <strong>Emergency access setup:</strong><br><br>Go to <strong>Beneficiaries</strong> in the sidebar to:<br>1. Add trusted contacts (family, spouse)<br>2. Set a wait period (48–72 hours recommended)<br>3. Specify which vault items they can access<br><br>When triggered, they send a request and you have the wait period to deny it.`,
+  'Which breach alerts should I fix first?': `⚠️ <strong>Breach priority order:</strong><br><br>🔴 <strong>Fix immediately:</strong><br>• Any password found in common breach databases<br><br>🟡 <strong>Fix soon:</strong><br>• Old or reused passwords<br>• Accounts without 2FA<br><br><strong>What to do:</strong><br>• Go to Breach Alerts page<br>• Update each flagged password<br>• Enable 2FA on affected accounts`,
+  'Generate a strong password': `🎲 <strong>Generating a strong password…</strong><br><br>Use the password generator in <strong>Add Vault Item</strong> → click "Generate".<br><br>Tips for strong passwords:<br>• At least 16 characters<br>• Mix uppercase, lowercase, numbers, symbols<br>• Never reuse passwords<br>• Use a unique password for every account`
+};
+
+const userInitials = '{{ session.user_name[:2]|upper }}';
+
+function aiSend(msgText) {
+  const input = document.getElementById('ai-input');
+  const msgs = document.getElementById('ai-msgs');
+  const text = msgText || input.value.trim();
+  if (!text) return;
+  if (!msgText) input.value = '';
+  msgs.innerHTML += `<div class="ai-msg user"><div class="ai-bubble">${text}</div><div class="ai-avatar" style="background:linear-gradient(135deg,var(--accent3),var(--purple))">${userInitials}</div></div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+  setTimeout(() => {
+    const resp = aiResponses[text] || `🤖 I'm analysing your vault for: "<strong>${text}</strong>"<br><br>I can help with password health, encryption questions, breach alerts, beneficiary setup, and general security guidance. Try one of the quick suggestions below!`;
+    msgs.innerHTML += `<div class="ai-msg"><div class="ai-avatar">🤖</div><div class="ai-bubble">${resp}</div></div>`;
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 700);
+}
+</script>
+{% endblock %}

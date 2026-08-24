@@ -1,0 +1,80 @@
+{% extends "admin_shell.html" %}
+{% set active_page = 'payments' %}
+{% set pending_pay = counts.pending %}
+{% block title %}Payments — Admin — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="admin-bar">💳 All payment submissions — confirm to activate user plans</div>
+<div class="page-header">
+  <h1>💳 Payment Transactions</h1>
+  <p>Review, confirm or reject user plan payment submissions</p>
+</div>
+
+<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+  <div class="stat-card"><div class="stat-icon">📋</div><div class="stat-label">Total</div><div class="stat-value">{{ counts.all }}</div></div>
+  <div class="stat-card amber"><div class="stat-icon">⏳</div><div class="stat-label">Pending</div><div class="stat-value">{{ counts.pending }}</div><div class="stat-sub">Needs review</div></div>
+  <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-label">Confirmed</div><div class="stat-value">{{ counts.confirmed }}</div></div>
+  <div class="stat-card teal"><div class="stat-icon">₹</div><div class="stat-label">Total Revenue</div><div class="stat-value" style="font-size:1.3rem">₹{{ total_revenue }}</div></div>
+</div>
+
+<!-- Filter tabs -->
+<div style="display:flex;gap:8px;margin-bottom:16px">
+  {% for s in ['all','pending','confirmed','rejected'] %}
+  <a href="{{ url_for('admin_payments', status=s) }}" class="btn btn-ghost btn-sm {% if status==s %}active-filter{% endif %}">
+    {{ s|title }} ({{ counts[s] }})
+  </a>
+  {% endfor %}
+</div>
+
+<div class="card" style="padding:0;overflow:hidden">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>User</th><th>Plan</th><th>Amount</th><th>TXN Ref</th><th>UPI ID</th><th>Screenshot</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for p in payments %}
+        {% set u = p.user %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="avatar" style="width:28px;height:28px;font-size:.7rem">{{ u.initials if u else '?' }}</div>
+              <div>
+                <div style="font-size:.82rem;font-weight:500">{{ u.name if u else 'Unknown' }}</div>
+                <div style="font-size:.72rem;color:var(--text3)">{{ u.email if u else '—' }}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="badge badge-{{ 'blue' if p.plan=='pro' else 'purple' }}">{{ plans[p.plan]['name'] if p.plan in plans else p.plan }}</span></td>
+          <td style="font-family:var(--mono);font-weight:600">₹{{ p.amount_inr }}</td>
+          <td style="font-family:var(--mono);font-size:.78rem;color:var(--accent2)">{{ p.txn_ref or '—' }}</td>
+          <td style="font-size:.75rem;color:var(--text3)">{{ p.upi_id or '—' }}</td>
+          <td>
+            {% if p.screenshot_path %}
+            <a href="{{ url_for('static', filename='uploads/' + p.screenshot_path) }}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:.7rem">View 🖼</a>
+            {% else %}<span style="font-size:.75rem;color:var(--text3)">—</span>{% endif %}
+          </td>
+          <td style="font-size:.75rem;color:var(--text3)">{{ p.created_at.strftime('%b %d, %Y') }}</td>
+          <td><span class="badge badge-{{ p.status_badge }}">{{ p.status|title }}</span></td>
+          <td>
+            {% if p.status == 'pending' %}
+            <div style="display:flex;gap:6px;flex-direction:column">
+              <form method="POST" action="{{ url_for('admin_confirm_payment', pid=p.id) }}" style="display:inline">
+                <input type="hidden" name="note" value="Payment verified by admin."/>
+                <button class="btn btn-success btn-sm" type="submit" style="width:100%;font-size:.75rem">✅ Confirm</button>
+              </form>
+              <form method="POST" action="{{ url_for('admin_reject_payment', pid=p.id) }}" style="display:inline" onsubmit="return confirm('Reject this payment?')">
+                <input type="hidden" name="note" value="Payment could not be verified."/>
+                <button class="btn btn-danger btn-sm" type="submit" style="width:100%;font-size:.75rem">❌ Reject</button>
+              </form>
+            </div>
+            {% else %}
+            <span style="font-size:.75rem;color:var(--text3)">{{ p.admin_note or '—' }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" style="text-align:center;color:var(--text3);padding:40px">No payments found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

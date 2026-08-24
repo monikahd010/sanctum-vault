@@ -1,0 +1,69 @@
+{% extends "app_shell.html" %}
+{% set active_page = 'settings' %}
+{% block title %}Settings — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>⚙️ Settings</h1>
+  <p>Manage your account and security preferences</p>
+</div>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title" style="margin-bottom:16px">👤 Profile</div>
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Full name</label>
+        <input class="form-input" type="text" name="name" value="{{ user.name }}"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email (read-only)</label>
+        <input class="form-input" type="email" value="{{ user.email }}" readonly style="opacity:.6"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone</label>
+        <input class="form-input" type="tel" name="phone" value="{{ user.phone or '' }}" placeholder="+91 98xxx xxxxx"/>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+        <div class="card-title" style="margin-bottom:12px">🔒 Change password</div>
+        <div class="form-group">
+          <label class="form-label">Current password</label>
+          <input class="form-input" type="password" name="current_password" placeholder="Enter current password"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">New password</label>
+          <input class="form-input" type="password" name="new_password" placeholder="Min. 8 characters"/>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm" type="submit">Save changes</button>
+    </form>
+  </div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:16px">🔒 Security preferences</div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-size:.85rem;font-weight:500">Auto-lock vault</div><div style="font-size:.75rem;color:var(--text3)">Lock after 10 min idle</div></div>
+        <label class="toggle"><input type="checkbox" checked/><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-size:.85rem;font-weight:500">Email breach alerts</div><div style="font-size:.75rem;color:var(--text3)">Get notified of breaches</div></div>
+        <label class="toggle"><input type="checkbox" checked/><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-size:.85rem;font-weight:500">Login notifications</div><div style="font-size:.75rem;color:var(--text3)">Alert on new device login</div></div>
+        <label class="toggle"><input type="checkbox" checked/><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </div>
+      <div>
+        <div style="font-size:.85rem;font-weight:500;margin-bottom:6px">Session timeout</div>
+        <select class="form-input" style="height:36px;padding:6px 10px">
+          <option>10 minutes</option>
+          <option selected>30 minutes</option>
+          <option>1 hour</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:20px;padding:14px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px">
+      <div style="font-size:.85rem;font-weight:600;color:var(--red);margin-bottom:8px">⚠️ Danger zone</div>
+      <button class="btn btn-danger btn-sm" onclick="return confirm('Delete your account? This cannot be undone.')">Delete account</button>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "app_shell.html" %}
+{% set active_page = '2fa' %}
+{% block title %}Backup Codes — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>🗝️ Backup Codes</h1>
+  <p>Save these codes in a secure place — each can only be used once</p>
+</div>
+<div style="max-width:560px">
+
+  {% if codes %}
+  <div style="padding:14px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;margin-bottom:20px;font-size:.83rem;color:var(--red);display:flex;gap:10px;align-items:flex-start">
+    <span style="font-size:1.2rem">⚠️</span>
+    <div><strong>Save these now.</strong> These codes will not be shown again. Store them offline — in a password manager, printed paper, or secure notes app.</div>
+  </div>
+
+  <div class="card" id="codes-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-weight:600">Your 10 backup codes</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="copyAllCodes()">📋 Copy all</button>
+        <button class="btn btn-ghost btn-sm" onclick="downloadCodes()">⬇ Download</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Print</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="codes-grid">
+      {% for code in codes %}
+      <div class="backup-code">
+        <span style="color:var(--text3);font-size:.72rem;margin-right:6px">{{ loop.index }}.</span>
+        <code class="backup-code-text">{{ code }}</code>
+      </div>
+      {% endfor %}
+    </div>
+    <div style="margin-top:16px;padding:10px;background:var(--bg2);border-radius:8px;font-size:.75rem;color:var(--text3)">
+      Generated: {{ user.backup_codes_generated_at.strftime('%B %d, %Y at %I:%M %p') if user.backup_codes_generated_at else 'Just now' }}
+      · Account: {{ user.email }}
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;margin-top:16px">
+    <a href="{{ url_for('twofa_settings') }}" class="btn btn-primary">Done — I've saved these codes</a>
+  </div>
+
+  {% else %}
+  <!-- No codes in session — show remaining count -->
+  <div class="card" style="text-align:center;padding:40px">
+    <div style="font-size:3rem;margin-bottom:16px">🗝️</div>
+    {% if user.backup_codes %}
+    <div style="font-weight:600;margin-bottom:8px">{{ user.backup_codes_list|length }} backup codes remaining</div>
+    <div style="font-size:.83rem;color:var(--text2);margin-bottom:20px">
+      Your codes were generated on {{ user.backup_codes_generated_at.strftime('%B %d, %Y') if user.backup_codes_generated_at else 'a previous date' }}.
+      For security, the codes are not shown again after initial generation.
+    </div>
+    <div style="padding:12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:8px;font-size:.8rem;color:var(--amber);margin-bottom:20px">
+      ⚠️ If you've lost your codes, regenerate them from the 2FA settings page. This will invalidate all existing codes.
+    </div>
+    {% else %}
+    <div style="font-weight:600;margin-bottom:8px">No backup codes generated yet</div>
+    <div style="font-size:.83rem;color:var(--text2);margin-bottom:20px">Generate backup codes from the 2FA settings page.</div>
+    {% endif %}
+    <a href="{{ url_for('twofa_settings') }}" class="btn btn-ghost">← Back to 2FA settings</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const codes = {{ codes | tojson }};
+
+function copyAllCodes() {
+  const text = codes.map((c, i) => `${i+1}. ${c}`).join('\n');
+  const header = `Sanctum Vault Backup Codes\nAccount: {{ user.email }}\nGenerated: {{ user.backup_codes_generated_at.strftime('%Y-%m-%d') if user.backup_codes_generated_at else 'now' }}\n\n`;
+  navigator.clipboard.writeText(header + text).then(() => {
+    const btn = document.querySelector('[onclick="copyAllCodes()"]');
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => { btn.textContent = '📋 Copy all'; }, 2000);
+  });
+}
+
+function downloadCodes() {
+  const text = [
+    'SANCTUM VAULT — BACKUP CODES',
+    '================================',
+    `Account: {{ user.email }}`,
+    `Generated: {{ user.backup_codes_generated_at.strftime('%Y-%m-%d %H:%M') if user.backup_codes_generated_at else 'now' }}`,
+    '',
+    'IMPORTANT: Keep these codes safe. Each code can only be used once.',
+    '',
+    ...codes.map((c, i) => `  ${String(i+1).padStart(2,' ')}. ${c}`),
+    '',
+    '================================',
+    'Store this file offline in a secure location.',
+  ].join('\n');
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sanctum-vault-backup-codes.txt';
+  a.click();
+}
+</script>
+{% endblock %}

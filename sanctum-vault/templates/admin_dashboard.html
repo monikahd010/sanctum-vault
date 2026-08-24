@@ -1,0 +1,87 @@
+{% extends "admin_shell.html" %}
+{% set pending_pay = pending_pay %}
+{% set active_page = 'dashboard' %}
+{% block title %}Admin Dashboard — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="admin-bar">🛡️ Admin session active — All actions are logged and audited</div>
+<div class="page-header">
+  <h1>📊 Admin Dashboard</h1>
+  <p>System overview and platform analytics</p>
+</div>
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon">👥</div>
+    <div class="stat-label">Total users</div>
+    <div class="stat-value">{{ total_users }}</div>
+    <div class="stat-sub">Registered accounts</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-icon">✅</div>
+    <div class="stat-label">Active users</div>
+    <div class="stat-value">{{ active_users }}</div>
+    <div class="stat-sub up">Active accounts</div>
+  </div>
+  <div class="stat-card teal">
+    <div class="stat-icon">🗄️</div>
+    <div class="stat-label">Vault items</div>
+    <div class="stat-value">{{ total_items }}</div>
+    <div class="stat-sub">Total encrypted items</div>
+  </div>
+  <div class="stat-card teal">
+    <div class="stat-icon">₹</div>
+    <div class="stat-label">Revenue</div>
+    <div class="stat-value" style="font-size:1.4rem">₹{{ total_revenue }}</div>
+    <div class="stat-sub">Confirmed payments</div>
+  </div>
+  <div class="stat-card {% if pending_pay > 0 %}amber{% else %}green{% endif %}">
+    <div class="stat-icon">⏳</div>
+    <div class="stat-label">Pending payments</div>
+    <div class="stat-value">{{ pending_pay }}</div>
+    <div class="stat-sub"><a href="{{ url_for('admin_payments') }}" style="color:var(--accent2)">Review →</a></div>
+  </div>
+  <div class="stat-card {% if threat_count > 0 %}red{% else %}green{% endif %}">
+    <div class="stat-icon">⚠️</div>
+    <div class="stat-label">Threats logged</div>
+    <div class="stat-value">{{ threat_count }}</div>
+    <div class="stat-sub">Security events</div>
+  </div>
+</div>
+
+<div class="grid-65-35">
+  <div class="card">
+    <div class="card-header"><div class="card-title">👥 Recent registrations</div><a href="{{ url_for('admin_users') }}" style="font-size:.8rem;color:var(--accent2)">View all →</a></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Joined</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for user in recent_users %}
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="avatar" style="width:28px;height:28px;font-size:.7rem">{{ user.initials }}</div>
+                {{ user.name }}
+              </div>
+            </td>
+            <td style="font-size:.82rem;color:var(--text2)">{{ user.email }}</td>
+            <td style="font-size:.78rem;color:var(--text3)">{{ user.created_at.strftime('%b %d, %Y') }}</td>
+            <td><span class="badge badge-{{ 'green' if user.is_active else 'red' }}">{{ 'Active' if user.is_active else 'Disabled' }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">📋 Recent events</div></div>
+    {% for log in recent_logs[:6] %}
+    <div class="activity-item">
+      <div class="act-icon {{ log.icon_type }}">{{ log.icon }}</div>
+      <div class="act-body">
+        <div class="act-title" style="font-size:.8rem">{{ log.action }}</div>
+        <div class="act-meta">{{ log.time_ago }} · User #{{ log.user_id }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

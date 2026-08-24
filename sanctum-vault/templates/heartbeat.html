@@ -1,0 +1,68 @@
+{% extends "app_shell.html" %}
+{% set active_page = 'heartbeat' %}
+{% block title %}Heartbeat — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>💓 Heartbeat Monitor</h1>
+  <p>Sanctum Vault monitors your activity. If you go inactive, trusted contacts are alerted.</p>
+</div>
+<div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+  <div class="stat-card green">
+    <div class="stat-icon">💓</div>
+    <div class="stat-label">Current status</div>
+    <div class="stat-value" style="font-size:1.3rem;color:var(--{{ 'green' if user.heartbeat_status=='active' else 'amber' if user.heartbeat_status=='idle' else 'red' }})">{{ user.heartbeat_status|title }}</div>
+    <div class="stat-sub">{% if user.last_login %}{{ user.days_since_login }} day(s) ago{% else %}Never{% endif %}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">⏰</div>
+    <div class="stat-label">Check-in interval</div>
+    <div class="stat-value" style="font-size:1.3rem">{{ user.heartbeat_interval }}d</div>
+    <div class="stat-sub">Alert triggers after {{ user.heartbeat_interval }} days</div>
+  </div>
+  <div class="stat-card amber">
+    <div class="stat-icon">📬</div>
+    <div class="stat-label">Last login</div>
+    <div class="stat-value" style="font-size:1rem">{% if user.last_login %}{{ user.last_login.strftime('%b %d') }}{% else %}—{% endif %}</div>
+    <div class="stat-sub">Heartbeat check-in</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title">📊 Activity chart (simulated)</div></div>
+    <div class="hb-chart" id="big-hb-chart" style="height:80px"></div>
+    <div style="display:flex;gap:16px;margin-top:10px;font-size:.75rem;color:var(--text3)">
+      <span>🟢 Active</span><span>🟡 Idle</span><span>🔴 No check-in</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:14px">⚙️ Heartbeat settings</div>
+    <form method="POST" action="{{ url_for('heartbeat_checkin') }}">
+      <div style="margin-bottom:14px">
+        <div style="font-size:.85rem;font-weight:500;margin-bottom:6px">Check-in interval</div>
+        <select class="form-input">
+          <option>7 days</option>
+          <option {% if user.heartbeat_interval==30 %}selected{% endif %}>30 days</option>
+          <option>60 days</option>
+          <option>90 days</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm" style="width:100%">💓 Manual check-in now</button>
+    </form>
+    <div style="margin-top:14px;padding:12px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:8px;font-size:.78rem;color:var(--text2)">
+      ℹ️ Checking in resets your inactivity timer and prevents beneficiary alerts from triggering.
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function renderHBChart(id, count) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const states = ['active','active','active','idle','active','active','inactive','active','active','active','active','idle','active','active','active','active','active','active','idle','active','active','active','active','active','active','active','active','active','active','active'];
+  el.innerHTML = states.slice(0, count).map(s => `<div class="hb-bar ${s}" style="height:${s==='active'?Math.floor(Math.random()*30+50):s==='idle'?Math.floor(Math.random()*15+20):Math.floor(Math.random()*10+10)}%"></div>`).join('');
+}
+renderHBChart('big-hb-chart', 30);
+</script>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "app_shell.html" %}
+{% set active_page = '2fa' %}
+{% block title %}Set Up SMS Verification — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>💬 Set Up SMS Verification</h1>
+  <p>Receive a one-time code via SMS whenever you sign in</p>
+</div>
+<div style="max-width:520px">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="flash flash-{{ cat }}" style="margin-bottom:16px">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  {% if not sent %}
+  <!-- Step 1: Enter phone number -->
+  <div class="card">
+    <div class="step-badge">Step 1</div>
+    <div style="font-weight:600;font-size:.95rem;margin-bottom:6px">Enter your phone number</div>
+    <div style="font-size:.83rem;color:var(--text2);margin-bottom:16px">We'll send a 6-digit OTP to this number to verify it.</div>
+    <form method="POST">
+      <input type="hidden" name="action" value="send"/>
+      <div class="form-group">
+        <label class="form-label">Phone number (with country code)</label>
+        <input class="form-input" type="tel" name="phone"
+               value="{{ user.phone or '' }}" placeholder="+91 98765 43210" required autofocus
+               style="font-size:1rem;height:48px"/>
+        <div style="font-size:.72rem;color:var(--text3);margin-top:4px">Include country code e.g. +91 for India, +1 for USA</div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary" type="submit">Send OTP 📤</button>
+        <a href="{{ url_for('twofa_settings') }}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <div style="font-size:.82rem;font-weight:600;margin-bottom:10px">📋 How it works</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div class="step-circle">1</div>
+        <div style="font-size:.83rem;color:var(--text2)">Enter your mobile number and click Send OTP</div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div class="step-circle">2</div>
+        <div style="font-size:.83rem;color:var(--text2)">You'll receive a 6-digit code via SMS (valid 10 minutes)</div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div class="step-circle">3</div>
+        <div style="font-size:.83rem;color:var(--text2)">Enter the code to confirm and enable SMS 2FA</div>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <!-- Step 2: Verify OTP -->
+  <div class="card">
+    <div class="step-badge">Step 2</div>
+    <div style="font-weight:600;font-size:.95rem;margin-bottom:4px">Enter the OTP</div>
+    <div style="font-size:.83rem;color:var(--text2);margin-bottom:16px">
+      We sent a 6-digit code to <strong>{{ user.phone }}</strong>. It expires in 10 minutes.
+    </div>
+    <form method="POST">
+      <input type="hidden" name="action" value="verify"/>
+      <div class="form-group">
+        <label class="form-label">6-digit OTP</label>
+        <input class="form-input totp-input" type="text" name="sms_code" maxlength="6"
+               placeholder="000000" inputmode="numeric" pattern="[0-9]{6}"
+               style="width:180px;text-align:center;font-size:1.6rem;font-family:var(--mono);letter-spacing:.25em;height:52px"
+               required autofocus/>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-primary" type="submit">Verify &amp; Enable ✓</button>
+        <a href="{{ url_for('sms_setup') }}" class="btn btn-ghost">Resend OTP</a>
+        <a href="{{ url_for('twofa_settings') }}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <div style="margin-top:12px;padding:10px 14px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:8px;font-size:.78rem;color:var(--amber)">
+    ⚠️ <strong>Demo mode:</strong> Since this is a local prototype, the OTP appears in the success message above. In production, it would be sent via SMS (Twilio / MSG91).
+  </div>
+
+  <!-- OTP expiry countdown -->
+  <div class="card" style="margin-top:14px;text-align:center">
+    <div style="font-size:.82rem;color:var(--text3);margin-bottom:4px">OTP expires in</div>
+    <div style="font-size:2rem;font-family:var(--mono);font-weight:700;color:var(--amber)" id="sms-countdown">10:00</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+{% if sent %}
+<script>
+// Auto-submit when 6 digits entered
+document.querySelector('.totp-input').addEventListener('input', function() {
+  if (this.value.length === 6) this.closest('form').submit();
+});
+// SMS countdown (10 min)
+let remaining = 600;
+const el = document.getElementById('sms-countdown');
+const t = setInterval(() => {
+  remaining--;
+  if (remaining <= 0) { clearInterval(t); el.textContent = 'Expired'; el.style.color='var(--red)'; return; }
+  const m = Math.floor(remaining / 60).toString().padStart(2,'0');
+  const s = (remaining % 60).toString().padStart(2,'0');
+  el.textContent = `${m}:${s}`;
+  if (remaining <= 60) el.style.color = 'var(--red)';
+}, 1000);
+</script>
+{% endif %}
+{% endblock %}

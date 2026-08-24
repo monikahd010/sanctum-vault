@@ -1,0 +1,47 @@
+{% extends "admin_shell.html" %}
+{% set active_page = 'users' %}
+{% block title %}User Management — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>👥 User Management</h1>
+  <p>View, manage, and moderate user accounts</p>
+</div>
+<form method="GET" style="margin-bottom:16px;display:flex;gap:10px">
+  <input class="form-input" name="q" value="{{ search }}" placeholder="Search by name or email…" style="max-width:320px"/>
+  <button class="btn btn-ghost btn-sm" type="submit">Search</button>
+  {% if search %}<a href="{{ url_for('admin_users') }}" class="btn btn-ghost btn-sm">Clear</a>{% endif %}
+</form>
+<div class="card" style="padding:0;overflow:hidden">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>User</th><th>Email</th><th>Plan</th><th>Joined</th><th>Last login</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="avatar" style="width:32px;height:32px;font-size:.75rem">{{ user.initials }}</div>
+              <span style="font-size:.88rem;font-weight:500">{{ user.name }}</span>
+            </div>
+          </td>
+          <td style="font-size:.82rem;color:var(--text2)">{{ user.email }}</td>
+          <td><span class="badge badge-{{ 'blue' if user.plan=='pro' else 'gray' }}">{{ user.plan|title }}</span></td>
+          <td style="font-size:.78rem;color:var(--text3)">{{ user.created_at.strftime('%b %d, %Y') }}</td>
+          <td style="font-size:.78rem;color:var(--text3)">{{ user.last_login.strftime('%b %d') if user.last_login else 'Never' }}</td>
+          <td><span class="badge badge-{{ 'green' if user.is_active else 'red' }}">{{ 'Active' if user.is_active else 'Disabled' }}</span></td>
+          <td>
+            <form method="POST" action="{{ url_for('admin_toggle_user', uid=user.id) }}" style="display:inline">
+              <button class="btn btn-{{ 'danger' if user.is_active else 'success' }} btn-sm" type="submit">
+                {{ 'Disable' if user.is_active else 'Enable' }}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px">No users found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

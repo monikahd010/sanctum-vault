@@ -1,0 +1,152 @@
+{% extends "app_shell.html" %}
+{% set active_page = '2fa' %}
+{% block title %}2FA Settings — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>🔑 Two-Factor Authentication</h1>
+  <p>Secure your account with multiple layers of verification</p>
+</div>
+
+<!-- Security strength bar -->
+<div class="card" style="margin-bottom:20px;background:linear-gradient(135deg,rgba(59,127,255,.06),rgba(139,92,246,.06));border-color:rgba(59,127,255,.2)">
+  <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <div style="font-size:2.5rem">🛡️</div>
+    <div style="flex:1">
+      <div style="font-size:.82rem;color:var(--text3);margin-bottom:4px">2FA Security Strength</div>
+      <div class="progress-bar" style="height:8px;margin-bottom:6px">
+        <div class="progress-fill" style="width:{{ user.active_2fa_count * 33 }}%;background:{% if user.active_2fa_count==0 %}var(--red){% elif user.active_2fa_count==1 %}var(--amber){% elif user.active_2fa_count==2 %}var(--accent){% else %}var(--green){% endif %}"></div>
+      </div>
+      <div style="font-size:.8rem;color:var(--text2)">
+        {{ user.active_2fa_count }} of 3 methods active —
+        {% if user.active_2fa_count == 0 %}⚠️ No 2FA enabled. Your account is at risk.
+        {% elif user.active_2fa_count == 1 %}Good start. Add one more method for stronger protection.
+        {% elif user.active_2fa_count == 2 %}Great! Consider adding a third method.
+        {% else %}Excellent! Maximum security enabled.{% endif %}
+      </div>
+    </div>
+    {% if user.backup_codes %}
+    <span class="badge badge-green" style="font-size:.72rem">🗝️ Backup codes: {{ user.backup_codes_list|length }} left</span>
+    {% endif %}
+  </div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:14px">
+
+  <!-- ── TOTP ── -->
+  <div class="card twofa-card">
+    <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+      <div class="twofa-icon" style="background:rgba(59,127,255,.12)">📱</div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-weight:700;font-size:.95rem;margin-bottom:3px">Authenticator App (TOTP)</div>
+        <div style="font-size:.82rem;color:var(--text2);margin-bottom:8px">Use Google Authenticator, Authy, or any TOTP app. Generates a new 6-digit code every 30 seconds.</div>
+        {% if user.totp_enabled %}
+        <span class="badge badge-green">✓ Enabled</span>
+        <div style="margin-top:10px">
+          <form method="POST" action="{{ url_for('totp_disable') }}" style="display:flex;gap:8px;flex-wrap:wrap">
+            <input class="form-input" type="text" name="totp_code" placeholder="Enter current 6-digit code to disable" style="max-width:280px;height:36px;padding:6px 12px;font-size:.85rem"/>
+            <button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('Disable authenticator app?')">Disable</button>
+          </form>
+        </div>
+        {% else %}
+        <span class="badge badge-gray">Not enabled</span>
+        {% endif %}
+      </div>
+      {% if not user.totp_enabled %}
+      <a href="{{ url_for('totp_setup') }}" class="btn btn-primary btn-sm">Set up →</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── SMS ── -->
+  <div class="card twofa-card">
+    <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+      <div class="twofa-icon" style="background:rgba(16,185,129,.12)">💬</div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-weight:700;font-size:.95rem;margin-bottom:3px">SMS Verification</div>
+        <div style="font-size:.82rem;color:var(--text2);margin-bottom:8px">Receive a one-time code via SMS to your registered phone number.</div>
+        {% if user.sms_enabled %}
+        <span class="badge badge-green">✓ Enabled</span>
+        <div style="font-size:.78rem;color:var(--text3);margin-top:4px">📱 {{ user.phone }}</div>
+        <div style="margin-top:10px">
+          <form method="POST" action="{{ url_for('sms_disable') }}">
+            <button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('Disable SMS verification?')">Disable SMS</button>
+          </form>
+        </div>
+        {% else %}
+        <span class="badge badge-gray">{{ 'Phone: '+user.phone if user.phone else 'No phone set' }}</span>
+        {% endif %}
+      </div>
+      {% if not user.sms_enabled %}
+      <a href="{{ url_for('sms_setup') }}" class="btn btn-primary btn-sm">Set up →</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── HARDWARE KEY ── -->
+  <div class="card twofa-card">
+    <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+      <div class="twofa-icon" style="background:rgba(139,92,246,.12)">🔐</div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-weight:700;font-size:.95rem;margin-bottom:3px">Hardware Security Key</div>
+        <div style="font-size:.82rem;color:var(--text2);margin-bottom:8px">Use a physical FIDO2/WebAuthn device like YubiKey, Google Titan, or any USB security key.</div>
+        {% if user.hw_key_enabled %}
+        <span class="badge badge-green">✓ Enabled</span>
+        <div style="font-size:.78rem;color:var(--text3);margin-top:4px">🔑 {{ user.hw_key_name }}</div>
+        <div style="margin-top:10px">
+          <form method="POST" action="{{ url_for('hwkey_remove') }}">
+            <button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('Remove this hardware key?')">Remove key</button>
+          </form>
+        </div>
+        {% else %}
+        <span class="badge badge-gray">Not registered</span>
+        {% endif %}
+      </div>
+      {% if not user.hw_key_enabled %}
+      <a href="{{ url_for('hwkey_register') }}" class="btn btn-primary btn-sm">Register →</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── BACKUP CODES ── -->
+  <div class="card twofa-card">
+    <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+      <div class="twofa-icon" style="background:rgba(245,158,11,.12)">🗝️</div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-weight:700;font-size:.95rem;margin-bottom:3px">Backup Codes</div>
+        <div style="font-size:.82rem;color:var(--text2);margin-bottom:8px">One-time codes to access your account if you lose access to all other 2FA methods. Each code can only be used once.</div>
+        {% if user.backup_codes %}
+        <span class="badge badge-green">✓ Generated</span>
+        <div style="font-size:.78rem;color:var(--text3);margin-top:4px">
+          {{ user.backup_codes_list|length }} codes remaining ·
+          Generated {{ user.backup_codes_generated_at.strftime('%b %d, %Y') if user.backup_codes_generated_at else 'recently' }}
+        </div>
+        <!-- Test a backup code -->
+        <div style="margin-top:12px">
+          <form method="POST" action="{{ url_for('backup_verify') }}" style="display:flex;gap:8px;flex-wrap:wrap">
+            <input class="form-input" name="backup_code" placeholder="Test code (e.g. ABCDE-12345)" style="max-width:220px;height:36px;padding:6px 12px;font-size:.85rem;font-family:var(--mono)" maxlength="11"/>
+            <button class="btn btn-ghost btn-sm" type="submit">Verify code</button>
+          </form>
+        </div>
+        {% else %}
+        <span class="badge badge-gray">Not generated</span>
+        {% endif %}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <form method="POST" action="{{ url_for('backup_generate') }}">
+          <button class="btn btn-primary btn-sm" type="submit" onclick="return confirm('Generate new backup codes? Old codes will be invalidated.')">
+            {% if user.backup_codes %}Regenerate{% else %}Generate{% endif %} codes
+          </button>
+        </form>
+        {% if user.backup_codes %}
+        <a href="{{ url_for('backup_view') }}" class="btn btn-ghost btn-sm" style="text-align:center">View codes</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top:16px;padding:14px;background:rgba(59,127,255,.06);border:1px solid rgba(59,127,255,.2);border-radius:10px;font-size:.82rem;color:var(--text2)">
+  ℹ️ We recommend enabling at least two methods. Backup codes are a safety net — store them offline in a secure location.
+</div>
+{% endblock %}

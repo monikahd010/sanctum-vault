@@ -1,0 +1,50 @@
+{% extends "app_shell.html" %}
+{% set active_page = 'plans' %}
+{% block title %}Pay for {{ plan_info['name'] }} — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>💳 Upgrade to {{ plan_info['name'] }}</h1>
+  <p>Complete your payment via PhonePe or any UPI app</p>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:800px">
+  <!-- QR + instructions -->
+  <div class="card" style="text-align:center">
+    <div style="font-size:.9rem;font-weight:600;margin-bottom:14px">Scan &amp; Pay ₹{{ plan_info['price_inr'] }}</div>
+    <img src="{{ url_for('static', filename='phonepe_qr.jpg') }}" alt="PhonePe QR" style="width:200px;height:200px;object-fit:cover;border-radius:12px;border:2px solid var(--border2);margin-bottom:14px"/>
+    <div style="font-size:.82rem;color:var(--text2);margin-bottom:8px">Scan with PhonePe, GPay, Paytm or any UPI app</div>
+    <div style="display:inline-flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 14px">
+      <span style="font-family:var(--mono);font-size:.85rem;font-weight:600">₹{{ plan_info['price_inr'] }}</span>
+      <span style="color:var(--text3);font-size:.8rem">→ sanctumvault@phonepe</span>
+    </div>
+    <div style="margin-top:12px;font-size:.75rem;color:var(--text3)">UPI ID: <strong>sanctumvault@phonepe</strong><br>Name: <strong>Monika D</strong></div>
+  </div>
+
+  <!-- Confirmation form -->
+  <div class="card">
+    <div style="font-size:.9rem;font-weight:600;margin-bottom:16px">Enter payment details</div>
+    <form method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label class="form-label">UPI Transaction Reference No. *</label>
+        <input class="form-input" type="text" name="txn_ref" placeholder="e.g. 425678901234" required/>
+        <div style="font-size:.72rem;color:var(--text3);margin-top:4px">Find this in your PhonePe / GPay app under transaction history</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Your UPI ID (optional)</label>
+        <input class="form-input" type="text" name="upi_id" placeholder="yourname@upi"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Upload payment screenshot (optional)</label>
+        <input class="form-input" type="file" name="screenshot" accept="image/*" style="padding:8px"/>
+        <div style="font-size:.72rem;color:var(--text3);margin-top:4px">Speeds up admin verification</div>
+      </div>
+      <div style="padding:10px 14px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:8px;font-size:.78rem;color:var(--amber);margin-bottom:16px">
+        ⏱ Plan activates within 24 hours after admin verification.
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary" type="submit" style="flex:1">Submit payment ✓</button>
+        <a href="{{ url_for('plans') }}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

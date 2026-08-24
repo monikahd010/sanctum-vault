@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Shared Item — Sanctum Vault{% endblock %}
+{% block body %}
+<div style="width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);position:relative;overflow:hidden">
+  <div class="auth-bg-grid"></div>
+  <div style="position:relative;width:480px;max-width:95vw">
+    <div class="auth-card">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:2.5rem;margin-bottom:10px">{{ item.icon if item else '🔗' }}</div>
+        <div style="font-size:1.2rem;font-weight:700;margin-bottom:4px">Shared Item</div>
+        <div style="font-size:.82rem;color:var(--text2)">This item was securely shared with you via Sanctum Vault</div>
+      </div>
+      {% if item %}
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:16px;margin-bottom:16px">
+        <div style="font-size:.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Item name</div>
+        <div style="font-weight:600">{{ item.name }}</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:16px;margin-bottom:16px">
+        <div style="font-size:.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Type</div>
+        <div>{{ item.item_type|title }}</div>
+      </div>
+      {% if item.notes %}
+      <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:16px;margin-bottom:16px">
+        <div style="font-size:.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Notes</div>
+        <div style="font-size:.88rem">{{ item.notes }}</div>
+      </div>
+      {% endif %}
+      {% else %}
+      <div style="text-align:center;padding:24px;color:var(--text2);font-size:.88rem">No item details available for this link.</div>
+      {% endif %}
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:8px;font-size:.78rem;color:var(--green)">
+        🔒 Viewed {{ link.view_count }} / {% if link.max_views %}{{ link.max_views }}{% else %}∞{% endif %} times ·
+        Expires: {{ link.expires_label }}
+      </div>
+      <div style="text-align:center;margin-top:20px">
+        <a href="{{ url_for('landing') }}" style="font-size:.8rem;color:var(--accent2)">Powered by Sanctum Vault →</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

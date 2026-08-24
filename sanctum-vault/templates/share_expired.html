@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Link {{ reason|title }} — Sanctum Vault{% endblock %}
+{% block body %}
+<div style="width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)">
+  <div class="auth-card" style="text-align:center">
+    <div style="font-size:3rem;margin-bottom:16px">{{ '⏰' if reason=='expired' else '🚫' }}</div>
+    <div style="font-size:1.2rem;font-weight:700;margin-bottom:8px">
+      {{ 'Link Expired' if reason=='expired' else 'Maximum Views Reached' }}
+    </div>
+    <div style="color:var(--text2);font-size:.88rem;margin-bottom:24px">
+      {{ 'This share link has passed its expiry date.' if reason=='expired' else 'This link has been viewed the maximum number of times.' }}
+    </div>
+    <a href="{{ url_for('landing') }}" class="btn btn-ghost btn-sm">← Back to Sanctum Vault</a>
+  </div>
+</div>
+{% endblock %}

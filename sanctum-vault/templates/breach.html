@@ -1,0 +1,43 @@
+{% extends "app_shell.html" %}
+{% set active_page = 'breach' %}
+{% block title %}Breach Alerts — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>⚠️ Breach Alerts</h1>
+  <p>Powered by HaveIBeenPwned — monitoring your credentials 24/7</p>
+</div>
+
+{% if breached %}
+<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:16px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start">
+  <span style="font-size:1.5rem">🚨</span>
+  <div>
+    <div style="font-weight:600;margin-bottom:4px;color:var(--red)">{{ breached|length }} credential(s) found in data breaches</div>
+    <div style="font-size:.83rem;color:var(--text2)">Update the affected passwords immediately to secure your accounts.</div>
+  </div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+  {% for item in breached %}
+  <div class="card">
+    <div style="display:flex;align-items:flex-start;gap:14px">
+      <div style="font-size:1.8rem">{{ item.icon }}</div>
+      <div style="flex:1">
+        <div style="font-weight:600;margin-bottom:4px">{{ item.name }}</div>
+        <div style="font-size:.8rem;color:var(--text2);margin-bottom:8px">{{ item.notes or 'Found in breach database' }}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="badge badge-red">Compromised</span>
+          <span class="badge badge-amber">Update needed</span>
+        </div>
+      </div>
+      <a href="{{ url_for('vault') }}" class="btn btn-primary btn-sm">Fix now →</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:60px 20px">
+  <div style="font-size:3rem;margin-bottom:16px">✅</div>
+  <div style="font-size:1rem;font-weight:600;margin-bottom:8px;color:var(--green)">All clear!</div>
+  <div style="color:var(--text3);font-size:.88rem">None of your saved credentials have been found in known data breaches.</div>
+</div>
+{% endif %}
+{% endblock %}

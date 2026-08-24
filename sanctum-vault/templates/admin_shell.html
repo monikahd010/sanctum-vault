@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="app-shell">
+  <!-- ADMIN SIDEBAR -->
+  <aside class="sidebar admin-sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🛡️</div>
+      <div class="logo-name">Admin <span style="color:var(--teal2)">Panel</span></div>
+    </div>
+    <div style="padding:6px 10px;margin:6px 8px">
+      <span class="enc-badge" style="font-size:.65rem;width:100%;justify-content:center;color:var(--teal2);background:rgba(13,148,136,.1);border-color:rgba(13,148,136,.3)">🛡️ Admin Session Active</span>
+    </div>
+    <div class="sidebar-section">Overview</div>
+    <a class="nav-item {% if active_page=='dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+    <a class="nav-item {% if active_page=='users' %}active{% endif %}" href="{{ url_for('admin_users') }}"><span class="nav-icon">👥</span><span>User Management</span></a>
+    <a class="nav-item {% if active_page=='heartbeat' %}active{% endif %}" href="{{ url_for('admin_heartbeat') }}"><span class="nav-icon">💓</span><span>Heartbeat Monitor</span></a>
+    <div class="sidebar-section">Security</div>
+    <a class="nav-item {% if active_page=='audit' %}active{% endif %}" href="{{ url_for('admin_audit') }}"><span class="nav-icon">📋</span><span>Audit Logs</span></a>
+    <a class="nav-item {% if active_page=='threats' %}active{% endif %}" href="{{ url_for('admin_threats') }}"><span class="nav-icon">⚠️</span><span>Threat Monitor</span></a>
+    <a class="nav-item {% if active_page=='analytics' %}active{% endif %}" href="{{ url_for('admin_analytics') }}"><span class="nav-icon">📈</span><span>Analytics</span></a>
+    <div class="sidebar-footer">
+      <a class="user-card" href="{{ url_for('admin_logout') }}" title="Sign out">
+        <div class="avatar admin">{{ session.user_name[:2]|upper }}</div>
+        <div class="user-info">
+          <div class="user-name">{{ session.user_name }}</div>
+          <div class="user-role">Administrator</div>
+        </div>
+        <span style="color:var(--text3);font-size:.85rem">⏻</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <button class="btn-icon" onclick="toggleSidebar()" style="margin-right:8px">☰</button>
+      <div class="topbar-title" style="flex:1">Admin Dashboard</div>
+      <div class="heartbeat-pill" style="background:rgba(13,148,136,.1);border-color:rgba(13,148,136,.3);color:var(--teal2)"><span class="pulse-dot" style="background:var(--teal2)"></span> Secure</div>
+      <button class="btn-icon theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme" id="theme-btn">🌙</button>
+      <div class="avatar admin">{{ session.user_name[:2]|upper }}</div>
+    </div>
+    <div class="content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+        <div class="flash flash-{{ cat }}">{{ msg }} <span onclick="this.parentNode.remove()" style="float:right;cursor:pointer">✕</span></div>
+        {% endfor %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+{% endblock %}

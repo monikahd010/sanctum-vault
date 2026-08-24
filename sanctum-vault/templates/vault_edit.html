@@ -1,0 +1,75 @@
+{% extends "app_shell.html" %}
+{% set active_page = 'vault' %}
+{% block title %}Edit Vault Item — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>✏️ Edit Vault Item</h1>
+  <p>Update details for <strong>{{ item.name }}</strong></p>
+</div>
+<div style="max-width:560px">
+  <div class="card">
+    <form method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label class="form-label">Item name</label>
+        <input class="form-input" type="text" name="name" value="{{ item.name }}" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <input class="form-input" value="{{ item.item_type|title }}" readonly style="opacity:.6"/>
+      </div>
+      {% if item.item_type in ['password','identity'] %}
+      <div class="form-group">
+        <label class="form-label">Username / Email</label>
+        <input class="form-input" type="text" name="username" value="{{ item.username }}"/>
+      </div>
+      {% endif %}
+      <div class="form-group">
+        <label class="form-label">{{ 'Note content' if item.item_type=='note' else 'Card number' if item.item_type=='card' else 'Password / Secret' }}</label>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" type="password" name="value" id="secret-field" value="{{ item.encrypted_value }}" style="flex:1"/>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="toggleShow()">Show</button>
+        </div>
+      </div>
+      {% if item.item_type == 'password' %}
+      <div class="form-group">
+        <label class="form-label">Website URL</label>
+        <input class="form-input" type="url" name="url" value="{{ item.url }}"/>
+      </div>
+      {% endif %}
+      {% if item.item_type == 'document' %}
+      <div class="form-group">
+        <label class="form-label">Attached file</label>
+        {% if item.file_name %}
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+          <span style="font-size:1.2rem">📄</span>
+          <div style="flex:1">
+            <div style="font-size:.85rem;font-weight:500">{{ item.file_name }}</div>
+            <div style="font-size:.72rem;color:var(--text3)">{{ item.file_size_label }}</div>
+          </div>
+          <a href="{{ url_for('vault_download', item_id=item.id) }}" class="btn btn-ghost btn-sm">⬇ Download</a>
+        </div>
+        <div style="font-size:.75rem;color:var(--text3);margin-bottom:6px">Upload a new file to replace the existing one:</div>
+        {% endif %}
+        <input class="form-input" type="file" name="attachment" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif,.xlsx,.csv,.zip" style="padding:8px"/>
+      </div>
+      {% endif %}
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-input" name="notes" rows="3" style="resize:vertical">{{ item.notes }}</textarea>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button type="submit" class="btn btn-primary" style="flex:1">Save changes 💾</button>
+        <a href="{{ url_for('vault') }}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function toggleShow() {
+  const f = document.getElementById('secret-field');
+  f.type = f.type === 'password' ? 'text' : 'password';
+}
+</script>
+{% endblock %}

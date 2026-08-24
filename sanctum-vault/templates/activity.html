@@ -1,0 +1,36 @@
+{% extends "app_shell.html" %}
+{% set active_page = 'activity' %}
+{% block title %}Login Activity — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>📋 Login Activity</h1>
+  <p>Review all login events and security actions for your account</p>
+</div>
+<div class="card">
+  <div class="card-header"><div class="card-title">Recent events</div></div>
+  {% if logs %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Event</th><th>Detail</th><th>IP</th><th>When</th></tr></thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="act-icon {{ log.icon_type }}" style="width:28px;height:28px;font-size:.8rem">{{ log.icon }}</div>
+              <span style="font-size:.85rem;font-weight:500">{{ log.action }}</span>
+            </div>
+          </td>
+          <td style="font-size:.8rem;color:var(--text3)">{{ log.detail or '—' }}</td>
+          <td style="font-family:var(--mono);font-size:.78rem;color:var(--text3)">{{ log.ip or '—' }}</td>
+          <td style="font-size:.78rem;color:var(--text3)">{{ log.time_ago }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="color:var(--text3);font-size:.85rem;padding:20px 0;text-align:center">No activity recorded yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

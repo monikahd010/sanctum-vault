@@ -1,0 +1,133 @@
+{% extends "app_shell.html" %}
+{% set active_page = 'dashboard' %}
+{% block title %}Dashboard — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="admin-bar" style="background:rgba(59,127,255,.08);border-color:rgba(59,127,255,.2);color:var(--accent2)">
+  👋 Welcome back, {{ user.name }}. Your vault is secured.
+  {% if user.last_login %} Last login: {{ user.last_login.strftime('%b %d, %Y %I:%M %p') }}{% endif %}
+</div>
+<div class="page-header">
+  <h1>Dashboard</h1>
+  <p>Overview of your vault security and activity</p>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon">🗄️</div>
+    <div class="stat-label">Vault items</div>
+    <div class="stat-value">{{ vault_count }}</div>
+    <div class="stat-sub">Total encrypted items</div>
+  </div>
+  <div class="stat-card teal">
+    <div class="stat-icon">🔗</div>
+    <div class="stat-label">Secure shares</div>
+    <div class="stat-value">{{ share_count }}</div>
+    <div class="stat-sub">Active share links</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-icon">💓</div>
+    <div class="stat-label">Heartbeat</div>
+    <div class="stat-value" style="font-size:1.3rem;color:var(--green)">{{ user.heartbeat_status|title }}</div>
+    <div class="stat-sub">Monitoring active</div>
+  </div>
+  <div class="stat-card {% if breach_count > 0 %}red{% else %}green{% endif %}">
+    <div class="stat-icon">⚠️</div>
+    <div class="stat-label">Breach alerts</div>
+    <div class="stat-value">{{ breach_count }}</div>
+    <div class="stat-sub">{% if breach_count > 0 %}Action required{% else %}All clear{% endif %}</div>
+  </div>
+</div>
+
+<div class="grid-65-35">
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <!-- Security Score -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🛡️ Security score</div>
+        <span class="badge badge-green">Good</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:24px">
+        <div class="score-ring">
+          <svg width="100" height="100" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="var(--border)" stroke-width="8"/>
+            <circle cx="50" cy="50" r="40" fill="none" stroke="var(--green)" stroke-width="8" stroke-dasharray="201 251" stroke-linecap="round"/>
+          </svg>
+          <div class="score-text">78<div class="score-label-small">/100</div></div>
+        </div>
+        <div style="flex:1">
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:4px"><span>Breach exposure</span><span style="color:{% if breach_count > 0 %}var(--red){% else %}var(--green){% endif %}">{% if breach_count > 0 %}{{ breach_count }} items{% else %}✓ Clear{% endif %}</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:{% if breach_count > 0 %}30{% else %}100{% endif %}%;background:{% if breach_count > 0 %}var(--red){% else %}var(--green){% endif %}"></div></div>
+          </div>
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:4px"><span>Vault items</span><span style="color:var(--accent2)">{{ vault_count }}</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:{{ [vault_count * 2, 100]|min }}%;background:var(--accent)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:4px"><span>Active shares</span><span style="color:var(--teal2)">{{ share_count }}</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:{{ [share_count * 10, 100]|min }}%;background:var(--teal)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📋 Recent activity</div>
+        <a href="{{ url_for('activity') }}" style="font-size:.8rem;color:var(--accent2)">View all →</a>
+      </div>
+      {% for log in recent_activity %}
+      <div class="activity-item">
+        <div class="act-icon {{ log.icon_type }}">{{ log.icon }}</div>
+        <div class="act-body">
+          <div class="act-title">{{ log.action }}</div>
+          <div class="act-meta">{{ log.time_ago }}{% if log.detail %} · {{ log.detail }}{% endif %}</div>
+        </div>
+      </div>
+      {% else %}
+      <div style="color:var(--text3);font-size:.85rem;padding:12px 0">No recent activity.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <!-- Heartbeat -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px">💓 Heartbeat status</div>
+      <div style="text-align:center;padding:10px 0">
+        <div style="font-size:.8rem;color:var(--text3);margin-bottom:6px">Current status</div>
+        <div style="font-size:1.4rem;font-weight:700;font-family:var(--mono);color:var(--{{ 'green' if user.heartbeat_status=='active' else 'amber' if user.heartbeat_status=='idle' else 'red' }})">{{ user.heartbeat_status|title }}</div>
+        <div style="font-size:.75rem;color:var(--text3);margin-top:4px">
+          {% if user.last_login %}{{ user.days_since_login }} day(s) ago{% else %}Never logged in{% endif %}
+        </div>
+      </div>
+      <div class="hb-chart" id="dash-hb-chart"></div>
+      <a href="{{ url_for('heartbeat') }}" class="btn btn-ghost btn-sm" style="width:100%;margin-top:12px;display:flex;justify-content:center">View full heartbeat →</a>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px">⚡ Quick actions</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <a href="{{ url_for('vault_add') }}" class="btn btn-primary btn-sm">+ Add vault item</a>
+        <a href="{{ url_for('beneficiaries') }}" class="btn btn-ghost btn-sm">👥 Manage beneficiaries</a>
+        <a href="{{ url_for('sharing') }}" class="btn btn-ghost btn-sm">🔗 Create share link</a>
+        <a href="{{ url_for('breach') }}" class="btn {% if breach_count > 0 %}btn-danger{% else %}btn-ghost{% endif %} btn-sm">⚠️ Breach alerts {% if breach_count > 0 %}({{ breach_count }}){% endif %}</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function renderHBChart(id, count) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const states = ['active','active','active','idle','active','active','inactive','active','active','active','active','idle','active','active','active','active','active','active','idle','active','active','active','active','active'];
+  const items = states.slice(0, count);
+  el.innerHTML = items.map(s => `<div class="hb-bar ${s}" style="height:${s==='active'?Math.floor(Math.random()*30+50):s==='idle'?Math.floor(Math.random()*15+20):Math.floor(Math.random()*10+10)}%"></div>`).join('');
+}
+renderHBChart('dash-hb-chart', 24);
+</script>
+{% endblock %}

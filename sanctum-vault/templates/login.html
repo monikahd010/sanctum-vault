@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Sign In — Sanctum Vault{% endblock %}
+{% block body %}
+<div style="width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);position:relative;overflow:hidden">
+  <div class="auth-bg-grid"></div>
+  <div class="auth-glow"></div>
+  <div class="auth-card" style="position:relative">
+    <a href="{{ url_for('landing') }}" style="position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:1.1rem;text-decoration:none">✕</a>
+    <div class="auth-logo">
+      <div class="logo-icon">🔐</div>
+      <div class="logo-text">Sanctum <span>Vault</span></div>
+    </div>
+    <div class="auth-title">Welcome back</div>
+    <div class="auth-sub">Sign in to access your encrypted vault</div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+      <div class="flash flash-{{ cat }}" style="margin-bottom:14px">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Email address</label>
+        <input class="form-input" type="email" name="email" placeholder="you@example.com" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Master password</label>
+        <input class="form-input" type="password" name="password" placeholder="Your master password" required/>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:20px;font-size:.8rem">
+        <span style="color:var(--accent2);cursor:pointer">Forgot password?</span>
+      </div>
+      <button class="btn btn-primary" type="submit">Sign in →</button>
+    </form>
+    <p style="text-align:center;font-size:.8rem;color:var(--text3);margin-top:16px">Don't have an account? <a href="{{ url_for('register') }}" style="color:var(--accent2)">Register</a></p>
+  </div>
+</div>
+{% endblock %}

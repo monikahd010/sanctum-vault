@@ -1,0 +1,189 @@
+{% extends "app_shell.html" %}
+{% set active_page = 'beneficiaries' %}
+{% block title %}Beneficiaries — Sanctum Vault{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>👥 Beneficiaries</h1>
+  <p>Trusted contacts for emergency vault access</p>
+</div>
+
+<button class="btn btn-primary btn-sm" style="margin-bottom:20px" onclick="document.getElementById('add-modal').classList.add('open')">+ Add beneficiary</button>
+
+{% if beneficiaries %}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
+  {% for b in beneficiaries %}
+  <div class="benef-card">
+    <div class="benef-avatar">{{ b.initials }}</div>
+    <div class="benef-info">
+      <div class="benef-name">{{ b.name }}</div>
+      <div class="benef-rel">{{ b.relationship if b.relationship else 'Contact' }} · {{ b.email }}</div>
+      <div class="benef-wait">⏱ Wait: {{ b.wait_label }}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <span class="badge badge-{{ 'green' if b.status=='active' else 'gray' }}" style="font-size:.65rem">{{ b.status|title }}</span>
+      <a href="{{ url_for('beneficiary_edit', bid=b.id) }}" class="btn btn-ghost btn-sm">✏️ Edit</a>
+      <form method="POST" action="{{ url_for('beneficiary_delete', bid=b.id) }}" onsubmit="return confirm('Remove this beneficiary?')">
+        <button class="btn btn-danger btn-sm" type="submit">Remove</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:40px;margin-bottom:24px">
+  <div style="font-size:3rem;margin-bottom:16px">👥</div>
+  <div style="font-weight:600;margin-bottom:8px">No beneficiaries added</div>
+  <div style="color:var(--text3);font-size:.88rem">Add trusted contacts who can request emergency access to your vault.</div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-title" style="margin-bottom:12px">ℹ️ How beneficiary access works</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:8px">
+    <div style="text-align:center;padding:14px;background:var(--bg2);border-radius:10px">
+      <div style="font-size:1.6rem;margin-bottom:8px">📧</div>
+      <div style="font-size:.82rem;font-weight:600;margin-bottom:4px">1. Request sent</div>
+      <div style="font-size:.75rem;color:var(--text3)">Beneficiary requests access via email link</div>
+    </div>
+    <div style="text-align:center;padding:14px;background:var(--bg2);border-radius:10px">
+      <div style="font-size:1.6rem;margin-bottom:8px">⏳</div>
+      <div style="font-size:.82rem;font-weight:600;margin-bottom:4px">2. Wait period</div>
+      <div style="font-size:.75rem;color:var(--text3)">You can deny within the wait period</div>
+    </div>
+    <div style="text-align:center;padding:14px;background:var(--bg2);border-radius:10px">
+      <div style="font-size:1.6rem;margin-bottom:8px">🔓</div>
+      <div style="font-size:.82rem;font-weight:600;margin-bottom:4px">3. Access granted</div>
+      <div style="font-size:.75rem;color:var(--text3)">Read-only access to designated items</div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Beneficiary Modal -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Beneficiary</div>
+      <button class="modal-close" onclick="document.getElementById('add-modal').classList.remove('open')">✕</button>
+    </div>
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Full name</label>
+        <input class="form-input" type="text" name="name" placeholder="Contact's full name" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email address</label>
+        <input class="form-input" type="email" name="email" placeholder="contact@email.com" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Relationship</label>
+        <input class="form-input" type="text" name="relationship" placeholder="e.g. Spouse, Sibling, Friend"/>
+      </div>
+
+      <!-- Wait period type toggle -->
+      <div class="form-group">
+        <label class="form-label">Wait period type</label>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button type="button" class="btn btn-ghost btn-sm wp-tab active-tab" data-tab="duration" onclick="switchWPTab('duration')">⏱ Duration</button>
+          <button type="button" class="btn btn-ghost btn-sm wp-tab" data-tab="date" onclick="switchWPTab('date')">📅 Specific date</button>
+        </div>
+        <input type="hidden" name="wait_type" id="wait_type" value="duration"/>
+
+        <!-- Duration input -->
+        <div id="wp-duration">
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="font-size:.78rem;color:var(--text2);margin-bottom:12px">Enter the wait period. You can mix years, months, days, and hours — no limit.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div>
+                <label class="form-label">Years</label>
+                <input class="form-input" type="number" name="wait_years" min="0" placeholder="0" value="0"/>
+              </div>
+              <div>
+                <label class="form-label">Months</label>
+                <input class="form-input" type="number" name="wait_months" min="0" placeholder="0" value="0"/>
+              </div>
+              <div>
+                <label class="form-label">Days</label>
+                <input class="form-input" type="number" name="wait_days" min="0" placeholder="0" value="2"/>
+              </div>
+              <div>
+                <label class="form-label">Hours</label>
+                <input class="form-input" type="number" name="wait_hours" min="0" placeholder="0" value="0"/>
+              </div>
+            </div>
+            <div style="margin-top:10px;font-size:.75rem;color:var(--text3)">
+              💡 Example: 1 year, 6 months, 15 days, 0 hours
+            </div>
+          </div>
+        </div>
+
+        <!-- Specific date input -->
+        <div id="wp-date" style="display:none">
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="font-size:.78rem;color:var(--text2);margin-bottom:12px">Choose an exact date when access unlocks.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <label class="form-label">Day</label>
+                <input class="form-input" type="number" id="wp-day" min="1" max="31" placeholder="DD" value="1"/>
+              </div>
+              <div>
+                <label class="form-label">Month</label>
+                <select class="form-input" id="wp-month">
+                  {% for m in [('01','January'),('02','February'),('03','March'),('04','April'),('05','May'),('06','June'),('07','July'),('08','August'),('09','September'),('10','October'),('11','November'),('12','December')] %}
+                  <option value="{{ m[0] }}">{{ m[1] }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Year</label>
+                <input class="form-input" type="number" id="wp-year" min="2024" placeholder="YYYY" value="2025"/>
+              </div>
+            </div>
+            <input type="hidden" name="wait_until_date" id="wait-until-hidden"/>
+            <div style="font-size:.78rem;color:var(--text2)">Selected: <strong id="wp-date-preview">—</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button type="submit" class="btn btn-primary" style="flex:1">Add beneficiary</button>
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('add-modal').classList.remove('open')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchWPTab(tab) {
+  document.getElementById('wait_type').value = tab;
+  document.querySelectorAll('.wp-tab').forEach(b => b.classList.remove('active-tab'));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active-tab');
+  document.getElementById('wp-duration').style.display = tab === 'duration' ? 'block' : 'none';
+  document.getElementById('wp-date').style.display     = tab === 'date'     ? 'block' : 'none';
+}
+
+function updateDatePreview() {
+  const d = document.getElementById('wp-day').value.padStart(2,'0');
+  const m = document.getElementById('wp-month').value;
+  const y = document.getElementById('wp-year').value;
+  if (d && m && y && y.length === 4) {
+    const formatted = `${y}-${m}-${d}`;
+    document.getElementById('wait-until-hidden').value = formatted;
+    const dateObj = new Date(`${y}-${m}-${d}`);
+    document.getElementById('wp-date-preview').textContent = dateObj.toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'});
+  }
+}
+
+['wp-day','wp-month','wp-year'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', updateDatePreview);
+  if (el) el.addEventListener('change', updateDatePreview);
+});
+
+// Init year to next year
+const yearEl = document.getElementById('wp-year');
+if (yearEl) yearEl.value = new Date().getFullYear() + 1;
+updateDatePreview();
+</script>
+{% endblock %}
