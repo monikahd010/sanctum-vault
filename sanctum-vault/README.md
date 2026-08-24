@@ -3,8 +3,16 @@
 Sanctum Vault is a zero‑knowledge encrypted password and data vault focused on providing a simple, secure way to store and share sensitive information. The project demonstrates secure design patterns, modular Flask app structure, and common UX flows for vault management and admin oversight.
 
 ## Purpose
+Sanctum Vault is a demonstration of a secure personal vault for storing passwords, documents, notes, cards, and identity records in one place. It also explores controlled sharing, beneficiary access, heartbeat monitoring, breach awareness, and administrative oversight. The project is intended for local development and security-pattern demonstrations; production deployments require a security review and stronger infrastructure configuration.
 
 ## Tech stack
+- **Language:** Python 3
+- **Web framework:** Flask 3.0
+- **Templates and frontend:** Jinja2 templates, HTML, CSS, and vanilla JavaScript
+- **Database:** SQLAlchemy 2.0 through Flask-SQLAlchemy, with SQLite as the default local database
+- **Authentication utilities:** Werkzeug password hashing and secure filename handling
+- **Two-factor authentication:** PyOTP for TOTP codes, with QR-code generation through `qrcode` and Pillow
+- **Runtime configuration:** Environment variables for the Flask secret key and database URL
 
 
 ## Screenshots
